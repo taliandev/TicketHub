@@ -35,6 +35,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, eventId, tic
     if (!agreed || !selectedType || quantity < 1) return;
     dispatch(setBooking({
       eventId,
+      title: '',
       type: selectedType.type,
       price: selectedType.price,
       quantity,

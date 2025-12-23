@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { loginSuccess } from '@/store/slices/authSlice';
+
+interface ApiError {
+  message: string;
+  errors?: Array<{ field: string; message: string }>;
+}
 
 const ResetPassword = () => {
   const { token } = useParams<{ token: string }>();
@@ -52,8 +57,9 @@ const ResetPassword = () => {
       navigate(redirectPath, { 
         state: { message: 'Mật khẩu đã được đặt lại thành công!' }
       });
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại');
+    } catch (err) {
+      const error = err as AxiosError<ApiError>;
+      setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại');
     } finally {
       setIsLoading(false);
     }

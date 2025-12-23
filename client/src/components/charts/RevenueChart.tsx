@@ -11,7 +11,8 @@ import {
 
 interface RevenueChartProps {
   data: Array<{
-    _id: number;
+    _id?: number;
+    date?: string;
     revenue: number;
     count: number;
   }>;
@@ -20,12 +21,15 @@ interface RevenueChartProps {
 
 const RevenueChart = ({ data, period = 'month' }: RevenueChartProps) => {
   // Transform data for chart
-  const chartData = data.map((item) => ({
-    name: period === 'year' ? `T${item._id}` : `${item._id}`,
-    revenue: item.revenue / 1000000, // Convert to millions
-    tickets: item.count,
-    fullName: period === 'year' ? `Tháng ${item._id}` : `Ngày ${item._id}`
-  }));
+  const chartData = data.map((item) => {
+    const id = item._id || item.date || '';
+    return {
+      name: period === 'year' ? `T${id}` : `${id}`,
+      revenue: item.revenue / 1000000, // Convert to millions
+      tickets: item.count,
+      fullName: period === 'year' ? `Tháng ${id}` : `Ngày ${id}`
+    };
+  });
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {

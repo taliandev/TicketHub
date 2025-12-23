@@ -22,7 +22,7 @@ const bookingSlice = createSlice({
   name: 'booking',
   initialState,
   reducers: {
-    setBooking: (state, action: PayloadAction<BookingState>) => {
+    setBooking: (_state, action: PayloadAction<BookingState>) => {
       return { ...action.payload };
     },
     clearBooking: () => initialState,

@@ -5,17 +5,36 @@ import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import UserForm from './UserForm';
 
+interface User {
+  _id: string;
+  fullName: string;
+  username: string;
+  email: string;
+  role: 'user' | 'admin' | 'organizer';
+  isBanned: boolean;
+  createdAt: string;
+}
+
+interface UsersResponse {
+  users: User[];
+  totalPages: number;
+  currentPage: number;
+  total: number;
+}
+
 const UsersTable = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
-  const { data, isLoading } = useAdminUsers(page, 10, search, roleFilter);
+  const { data: rawData, isLoading } = useAdminUsers(page, 10, search, roleFilter);
   const deleteUser = useDeleteUser();
 
-  const handleEdit = (user: any) => {
+  const data = rawData as UsersResponse | undefined;
+
+  const handleEdit = (user: User) => {
     setEditingUser(user);
     setIsEditModalOpen(true);
   };
@@ -111,7 +130,7 @@ const UsersTable = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {data?.users?.map((user: any) => (
+              {data?.users?.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -194,7 +213,7 @@ const UsersTable = () => {
         </div>
 
         {/* Pagination */}
-        {data?.totalPages > 1 && (
+        {data && data.totalPages > 1 && (
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Trang {data.currentPage} / {data.totalPages} - Tổng {data.total} người dùng

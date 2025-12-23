@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+
+interface ApiError {
+  message: string;
+  errors?: Array<{ field: string; message: string }>;
+}
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');

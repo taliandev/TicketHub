@@ -7,6 +7,18 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import RevenueChart from '../charts/RevenueChart';
 import CategoryPieChart from '../charts/CategoryPieChart';
 
+interface RevenueData {
+  revenueByDate?: Array<{ date: string; revenue: number; count: number }>;
+  revenueByCategory?: Array<{ category: string; revenue: number; count: number }>;
+  revenueByEvent?: Array<{ _id: string; revenue: number; count: number }>;
+}
+
+interface AdminStats {
+  totalRevenue: number;
+  totalTickets: number;
+  monthlyGrowth: number;
+}
+
 const RevenueAnalytics = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const isAdmin = user?.role === 'admin';
@@ -21,8 +33,8 @@ const RevenueAnalytics = () => {
   const { data: organizerStats } = useOrganizerStats({ enabled: isOrganizer });
 
   // Use appropriate data based on role
-  const revenueData = isAdmin ? adminRevenueData : organizerRevenueData;
-  const stats = isAdmin ? adminStats : organizerStats;
+  const revenueData = (isAdmin ? adminRevenueData : organizerRevenueData) as RevenueData | undefined;
+  const stats = (isAdmin ? adminStats : organizerStats) as AdminStats | undefined;
   const isLoading = isAdmin ? adminLoading : organizerLoading;
 
   // Calculate summary stats
@@ -32,8 +44,8 @@ const RevenueAnalytics = () => {
   const monthlyGrowth = stats?.monthlyGrowth || 0;
 
   // Calculate period revenue
-  const periodRevenue = revenueData?.revenueByDate?.reduce((sum: number, item: any) => sum + item.revenue, 0) || 0;
-  const periodTickets = revenueData?.revenueByDate?.reduce((sum: number, item: any) => sum + item.count, 0) || 0;
+  const periodRevenue = revenueData?.revenueByDate?.reduce((sum: number, item) => sum + item.revenue, 0) || 0;
+  const periodTickets = revenueData?.revenueByDate?.reduce((sum: number, item) => sum + item.count, 0) || 0;
 
   // Top events by revenue
   const topEvents = revenueData?.revenueByEvent?.slice(0, 5) || [];
@@ -179,7 +191,7 @@ const RevenueAnalytics = () => {
             <div className="h-96 flex items-center justify-center">
               <LoadingSpinner size="lg" />
             </div>
-          ) : revenueData?.revenueByDate?.length > 0 ? (
+          ) : revenueData?.revenueByDate && revenueData.revenueByDate.length > 0 ? (
             <div className="h-96">
               <RevenueChart data={revenueData.revenueByDate} period={period} />
             </div>
@@ -208,7 +220,7 @@ const RevenueAnalytics = () => {
               <div className="h-80 flex items-center justify-center">
                 <LoadingSpinner />
               </div>
-            ) : revenueData?.revenueByCategory?.length > 0 ? (
+            ) : revenueData?.revenueByCategory && revenueData.revenueByCategory.length > 0 ? (
               <div className="h-80">
                 <CategoryPieChart data={revenueData.revenueByCategory} />
               </div>
@@ -233,7 +245,7 @@ const RevenueAnalytics = () => {
           <div className="p-6">
             {topEvents.length > 0 ? (
               <div className="space-y-3">
-                {topEvents.map((event: any, index: number) => (
+                {topEvents.map((event, index: number) => (
                   <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-100 hover:shadow-md transition-shadow">
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${

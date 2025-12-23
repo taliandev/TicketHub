@@ -133,6 +133,27 @@ const ActivityItem = ({ activity }: { activity: any }) => {
   );
 };
 
+interface RevenueData {
+  revenueByDate?: Array<{ date: string; revenue: number; count: number }>;
+  revenueByCategory?: Array<{ category: string; revenue: number; count: number }>;
+}
+
+interface AdminStats {
+  totalUsers?: number;
+  totalEvents?: number;
+  totalRevenue?: number;
+  totalTickets?: number;
+  activeEvents?: number;
+  monthlyGrowth?: number;
+}
+
+interface Activity {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+}
+
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [revenuePeriod, setRevenuePeriod] = useState<'week' | 'month' | 'year'>('month');
@@ -145,16 +166,17 @@ const AdminDashboard = () => {
   // Fetch data based on role
   const { data: adminStats, isLoading: adminStatsLoading, error: adminStatsError } = useAdminStats({ enabled: isAdmin });
   const { data: organizerStats, isLoading: organizerStatsLoading } = useOrganizerStats({ enabled: isOrganizer });
-  const { data: activities = [], isLoading: activitiesLoading } = useRecentActivities(10, { enabled: isAdmin });
+  const { data: activitiesData = [], isLoading: activitiesLoading } = useRecentActivities(10, { enabled: isAdmin });
   const { data: adminRevenueData, isLoading: adminRevenueLoading } = useRevenueAnalytics(revenuePeriod, { enabled: isAdmin });
   const { data: organizerRevenueData, isLoading: organizerRevenueLoading } = useOrganizerRevenue(revenuePeriod, { enabled: isOrganizer });
 
   // Use appropriate data based on role
-  const stats = isAdmin ? adminStats : organizerStats;
+  const stats = (isAdmin ? adminStats : organizerStats) as AdminStats | undefined;
   const statsLoading = isAdmin ? adminStatsLoading : organizerStatsLoading;
   const statsError = isAdmin ? adminStatsError : null;
-  const revenueData = isAdmin ? adminRevenueData : organizerRevenueData;
+  const revenueData = (isAdmin ? adminRevenueData : organizerRevenueData) as RevenueData | undefined;
   const revenueLoading = isAdmin ? adminRevenueLoading : organizerRevenueLoading;
+  const activities = (activitiesData as Activity[]) || [];
 
   // Debug: Log revenue data
   console.log('Revenue Data:', revenueData);
@@ -296,7 +318,7 @@ const AdminDashboard = () => {
                   <div className="h-[300px] flex items-center justify-center">
                     <LoadingSpinner />
                   </div>
-                ) : revenueData?.revenueByDate?.length > 0 ? (
+                ) : revenueData?.revenueByDate && revenueData.revenueByDate.length > 0 ? (
                   <div className="h-[300px]">
                     <RevenueChart data={revenueData.revenueByDate} period={revenuePeriod} />
                   </div>
@@ -317,7 +339,7 @@ const AdminDashboard = () => {
                   <div className="h-[300px] flex items-center justify-center">
                     <LoadingSpinner />
                   </div>
-                ) : revenueData?.revenueByCategory?.length > 0 ? (
+                ) : revenueData?.revenueByCategory && revenueData.revenueByCategory.length > 0 ? (
                   <div className="h-[300px]">
                     <CategoryPieChart data={revenueData.revenueByCategory} />
                   </div>
@@ -342,21 +364,21 @@ const AdminDashboard = () => {
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <span className="text-gray-700">Doanh thu kỳ này</span>
                       <span className="text-2xl font-bold text-blue-600">
-                        {((revenueData?.revenueByDate?.reduce((sum: number, item: any) => sum + item.revenue, 0) || 0) / 1000000).toFixed(1)}M
+                        {((revenueData?.revenueByDate?.reduce((sum: number, item) => sum + item.revenue, 0) || 0) / 1000000).toFixed(1)}M
                       </span>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <span className="text-gray-700">Vé đã bán</span>
                       <span className="text-2xl font-bold text-green-600">
-                        {(revenueData?.revenueByDate?.reduce((sum: number, item: any) => sum + item.count, 0) || 0).toLocaleString()}
+                        {(revenueData?.revenueByDate?.reduce((sum: number, item) => sum + item.count, 0) || 0).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <span className="text-gray-700">Giá TB/vé</span>
                       <span className="text-2xl font-bold text-purple-600">
                         {(() => {
-                          const totalRevenue = revenueData?.revenueByDate?.reduce((sum: number, item: any) => sum + item.revenue, 0) || 0;
-                          const totalTickets = revenueData?.revenueByDate?.reduce((sum: number, item: any) => sum + item.count, 0) || 0;
+                          const totalRevenue = revenueData?.revenueByDate?.reduce((sum: number, item) => sum + item.revenue, 0) || 0;
+                          const totalTickets = revenueData?.revenueByDate?.reduce((sum: number, item) => sum + item.count, 0) || 0;
                           return totalTickets > 0 ? ((totalRevenue / totalTickets) / 1000).toFixed(0) : 0;
                         })()}K
                       </span>
@@ -393,7 +415,7 @@ const AdminDashboard = () => {
                   </div>
                 ) : activities.length > 0 ? (
                   <div className="divide-y divide-gray-100">
-                    {activities.map((activity: any) => (
+                    {activities.map((activity) => (
                       <ActivityItem key={activity.id} activity={activity} />
                     ))}
                   </div>

@@ -2,7 +2,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface CategoryPieChartProps {
   data: Array<{
-    _id: string;
+    _id?: string;
+    category?: string;
     revenue: number;
     count: number;
   }>;
@@ -13,7 +14,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'
 const CategoryPieChart = ({ data }: CategoryPieChartProps) => {
   // Transform data for chart
   const chartData = data.map((item, index) => ({
-    name: item._id,
+    name: item._id || item.category || 'Unknown',
     value: item.revenue,
     count: item.count,
     color: COLORS[index % COLORS.length]

@@ -1,0 +1,51 @@
+import axiosInstance from './axios'
+import { AxiosResponse } from 'axios'
+
+// API endpoints
+export const API_ENDPOINTS = {
+  // Auth
+  LOGIN: '/auth/login',
+  REGISTER: '/auth/register',
+  LOGOUT: '/auth/logout',
+  ME: '/auth/me',
+  
+  // Events
+  EVENTS: '/events',
+  EVENT_BY_ID: (id: string) => `/events/${id}`,
+  EVENTS_BY_IDS: '/events/by-ids',
+  
+  // Tickets
+  TICKETS: '/tickets',
+  TICKET_BY_ID: (id: string) => `/tickets/${id}`,
+  
+  // Payments
+  PAYMENTS: '/payments',
+  PAYMENT_BY_ID: (id: string) => `/payments/${id}`,
+  
+  // Reservations
+  RESERVATIONS: '/reservations',
+  RESERVATION_BY_ID: (id: string) => `/reservations/${id}`,
+  
+  // Search
+  SEARCH_SUGGESTIONS: '/search/suggestions',
+} as const
+
+// Generic API functions
+export const api = {
+  get: <T = any>(url: string, params?: any): Promise<AxiosResponse<T>> => 
+    axiosInstance.get(url, { params }),
+    
+  post: <T = any>(url: string, data?: any): Promise<AxiosResponse<T>> => 
+    axiosInstance.post(url, data),
+    
+  put: <T = any>(url: string, data?: any): Promise<AxiosResponse<T>> => 
+    axiosInstance.put(url, data),
+    
+  patch: <T = any>(url: string, data?: any): Promise<AxiosResponse<T>> => 
+    axiosInstance.patch(url, data),
+    
+  delete: <T = any>(url: string): Promise<AxiosResponse<T>> => 
+    axiosInstance.delete(url),
+}
+
+export default api

@@ -47,7 +47,9 @@ const eventSchema = new mongoose.Schema({
     required: [true, 'Image is required'],
     validate: {
       validator: function (v) {
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v);
+        // Allow URLs with or without query params
+        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(v) || 
+               /^https?:\/\/.+/.test(v); // Fallback for CDN URLs without extension
       },
       message: 'Image must be a valid image URL'
     }
@@ -104,7 +106,8 @@ const eventSchema = new mongoose.Schema({
 
 // Virtual field - tính totalCapacity động
 eventSchema.virtual('totalCapacity').get(function () {
-  return this.ticketTypes.reduce((sum, t) => sum + t.available, 0);
+  if (!this.ticketTypes || !Array.isArray(this.ticketTypes)) return 0;
+  return this.ticketTypes.reduce((sum, t) => sum + (t.available || 0), 0);
 });
 
 // Validate ngày bắt đầu / kết thúc bán vé

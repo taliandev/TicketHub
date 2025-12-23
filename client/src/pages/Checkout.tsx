@@ -21,7 +21,9 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useSelector((state: RootState) => state.auth.user);
-  const bookingData = (location.state as { bookingData: BookingData })?.bookingData;
+  const locationState = location.state as { bookingData: BookingData; existingTicketId?: string };
+  const bookingData = locationState?.bookingData;
+  const existingTicketId = locationState?.existingTicketId;
 
   // Debug log
   
@@ -55,6 +57,14 @@ const Checkout = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [reservationId, setReservationId] = useState<string>('');
   const [ttl, setTtl] = useState<number>(0);
+
+  // Auto-show payment if existingTicketId is provided
+  useEffect(() => {
+    if (existingTicketId) {
+      setTicketId(existingTicketId);
+      setShowPayment(true);
+    }
+  }, [existingTicketId]);
 
   const reservationStorageKey = user && bookingData
     ? `reservation:${user.id}:${bookingData.eventId}:${bookingData.type}`
@@ -134,11 +144,19 @@ const Checkout = () => {
   // Countdown timer
   useEffect(() => {
     if (ttl <= 0) return;
+    
     const timer = setInterval(() => {
-      setTtl(prev => (prev > 0 ? prev - 1 : 0));
+      setTtl(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
+    
     return () => clearInterval(timer);
-  }, [ttl]);
+  }, [reservationId]); // Only re-run when reservation changes
 
   // Poll TTL from server every 15s to stay in sync
   useEffect(() => {
@@ -203,10 +221,20 @@ const Checkout = () => {
     const formattedPhone = formatPhoneNumber(formData.phone);
 
     try {
-      console.log('Sending ticket data:', {
+      // If existingTicketId is provided, skip ticket creation and go straight to payment
+      if (existingTicketId) {
+        console.log('Using existing ticket:', existingTicketId);
+        setTicketId(existingTicketId);
+        setShowPayment(true);
+        setLoading(false);
+        return;
+      }
+
+      // Otherwise, create new ticket
+      console.log('Creating new ticket:', {
         eventId: bookingData.eventId,
         type: bookingData.type,
-        price: bookingData.price,
+        price: bookingData.price * bookingData.quantity, // Total price
         quantity_total: bookingData.quantity,
         status: 'pending',
         extraInfo: {
@@ -221,7 +249,7 @@ const Checkout = () => {
       const response = await axios.post('/api/tickets', {
         eventId: bookingData.eventId,
         type: bookingData.type,
-        price: bookingData.price,
+        price: bookingData.price * bookingData.quantity, // Total price, not unit price
         quantity_total: bookingData.quantity,
         status: 'pending',
         extraInfo: {

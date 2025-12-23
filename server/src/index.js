@@ -8,6 +8,8 @@ import eventRoutes from './routes/eventRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import reservationRoutes from './routes/reservationRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import organizerRoutes from './routes/organizerRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -26,6 +28,8 @@ app.use('/api/events', eventRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reservations', reservationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/organizer', organizerRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to TicketHub API' });

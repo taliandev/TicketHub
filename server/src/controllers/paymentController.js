@@ -4,6 +4,8 @@ import Ticket  from '../models/Ticket.js';
 import Order from '../models/Order.js';
 import Redis from 'ioredis';
 import { Event } from '../models/Event.js';
+import { sendTicketEmail } from '../services/emailService.js';
+import User from '../models/User.js';
 
 const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
@@ -245,6 +247,31 @@ export const checkPaymentStatus = async (req, res) => {
         if (transaction.reservationId) {
           await decrementRealStock(transaction.ticketId, transaction.method, transaction.reservationId);
         }
+
+        // Send ticket email
+        try {
+          const user = await User.findById(ticket.userId);
+          const event = await Event.findById(ticket.eventId);
+          
+          if (user && event) {
+            await sendTicketEmail({
+              userEmail: user.email,
+              userName: user.fullName || user.username,
+              eventTitle: event.title,
+              eventDate: event.date,
+              eventLocation: event.location,
+              ticketCode: ticket.ticketCode,
+              qrCode: ticket.qrCode,
+              ticketType: ticket.type,
+              quantity: ticket.quantity_total,
+              totalPrice: ticket.price
+            });
+            console.log('Ticket email sent to:', user.email);
+          }
+        } catch (emailError) {
+          console.error('Error sending ticket email:', emailError);
+          // Don't fail the payment if email fails
+        }
       }
     }
     
@@ -309,6 +336,31 @@ export const handlePaymentWebhook = async (req, res) => {
       // Decrement stock and release reservation
       if (transaction.reservationId) {
         await decrementRealStock(transaction.ticketId, transaction.method, transaction.reservationId);
+      }
+
+      // Send ticket email
+      try {
+        const user = await User.findById(ticket.userId);
+        const event = await Event.findById(ticket.eventId);
+        
+        if (user && event) {
+          await sendTicketEmail({
+            userEmail: user.email,
+            userName: user.fullName || user.username,
+            eventTitle: event.title,
+            eventDate: event.date,
+            eventLocation: event.location,
+            ticketCode: ticket.ticketCode,
+            qrCode: ticket.qrCode,
+            ticketType: ticket.type,
+            quantity: ticket.quantity_total,
+            totalPrice: ticket.price
+          });
+          console.log('Ticket email sent to:', user.email);
+        }
+      } catch (emailError) {
+        console.error('Error sending ticket email:', emailError);
+        // Don't fail the payment if email fails
       }
     }
     

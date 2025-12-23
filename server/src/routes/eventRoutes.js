@@ -6,10 +6,16 @@ const router = express.Router();
 // Get all published events
 router.get('/', async (req, res) => {
   try {
-    const { category, search, sort = 'date' } = req.query;
+    const { category, search, sort = 'date', includeExpired = 'false' } = req.query;
     
     // Build query
     const query = {};
+    
+    // Filter out expired events by default
+    if (includeExpired !== 'true') {
+      query.date = { $gte: new Date() };
+    }
+    
     if (category) {
       query.category = category;
     }

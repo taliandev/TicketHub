@@ -59,6 +59,7 @@ const ticketSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative'],
+    // This is TOTAL price (unit price × quantity)
   },
 
   currency: {
@@ -70,25 +71,12 @@ const ticketSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Total quantity is required'],
     min: [1, 'Quantity must be at least 1'],
-  },
-
-  quantity_sold: {
-    type: Number,
-    default: 0,
-    min: [0, 'Sold quantity cannot be negative'],
-  },
-
-  sale_start: {
-    type: Date,
-  },
-
-  sale_end: {
-    type: Date,
+    // Number of tickets purchased in this order
   },
 
   status: {
     type: String,
-    enum: ['pending', 'paid', 'reserved', 'cancelled'],
+    enum: ['pending', 'paid', 'reserved', 'cancelled', 'used'],
     default: 'pending',
   },
 
@@ -107,21 +95,28 @@ const ticketSchema = new mongoose.Schema({
     default: false,
   },
 
+  usedAt: {
+    type: Date,
+  },
+
+  purchaseDate: {
+    type: Date,
+    default: Date.now,
+  },
+
+  paidAt: {
+    type: Date,
+  },
+
+  paymentMethod: {
+    type: String,
+    enum: ['qr_code', 'momo', 'vnpay', 'cash'],
+  },
+
   extraInfo: {
     type: ExtraInfoSchema,
     required: true
   },
-
-  purchaseLimitPerUser: {
-    type: Number,
-    default: 4,
-    min: [1, 'Limit must be at least 1'],
-  },
-
-  isHidden: {
-    type: Boolean,
-    default: false,
-  }
 
 }, {
   timestamps: true

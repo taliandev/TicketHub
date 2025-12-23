@@ -43,9 +43,9 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Customer Support</h3>
             <div className="mt-4 text-gray-400 text-sm">
-              <div>support@ticketmelon.com</div>
-              <div>@ticketmelon</div>
-              <div>Ticketmelon</div>
+              <div>support@tickethub.com</div>
+              <div>@tickethub</div>
+              <div>TicketHub</div>
             </div>
             <div className="text-gray-400 mt-4 mb-2">+(66) 2 026 3068</div>
             <div className="text-gray-400 text-sm">Monday - Friday, 10.30-18.00 (UTC+7)</div>

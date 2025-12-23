@@ -1,5 +1,13 @@
 import express from 'express';
-import { getTicketsByUserId, createTicket, getAvailableTicketsByEvent, bookTicket, updateTicketStatus } from '../controllers/ticketController.js';
+import {
+  getTicketsByUserId,
+  createTicket,
+  getAvailableTicketsByEvent,
+  bookTicket,
+  updateTicketStatus
+} from '../controllers/ticketController.js';
+import { protect, authorize } from '../middleware/auth.js';
+import { checkinTicket } from '../controllers/checkinController.js';
 
 const router = express.Router();
 
@@ -14,5 +22,8 @@ router.post('/book', bookTicket);
 
 // Cập nhật trạng thái vé - Sửa path từ '/tickets/:id' thành '/:id'
 router.patch('/:id', updateTicketStatus);
+
+// Check-in ticket (organizer/admin only)
+router.post('/checkin', protect, authorize('organizer', 'admin'), checkinTicket);
 
 export default router; 

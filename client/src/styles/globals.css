@@ -73,4 +73,107 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  /* Custom animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-slideDown {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.2s ease-out;
+  }
+}
+
+/* Slick Carousel Custom Styles */
+.banner-slider .slick-prev,
+.banner-slider .slick-next {
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+}
+
+.banner-slider .slick-prev {
+  left: 20px;
+}
+
+.banner-slider .slick-next {
+  right: 20px;
+}
+
+.banner-slider .slick-prev:before,
+.banner-slider .slick-next:before {
+  font-size: 40px;
+  opacity: 0.75;
+}
+
+.banner-slider .slick-prev:hover:before,
+.banner-slider .slick-next:hover:before {
+  opacity: 1;
+}
+
+.banner-slider .slick-dots {
+  bottom: 20px;
+}
+
+.banner-slider .slick-dots li button:before {
+  font-size: 12px;
+  color: white;
+  opacity: 0.5;
+}
+
+.banner-slider .slick-dots li.slick-active button:before {
+  opacity: 1;
+  color: white;
 } 

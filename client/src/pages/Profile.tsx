@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import TicketModal from '../components/ui/TicketModal';
 import { useNavigate } from 'react-router-dom';
+import ChangePasswordSection from '@/components/profile/ChangePasswordSection';
 
 interface Ticket {
   _id: string;
@@ -88,11 +89,16 @@ const Profile = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Thống kê</h2>
           <div className="space-y-3">
-            <div><span className="font-medium">Tổng vé đã đặt:</span> {tickets.length}</div>
-            <div><span className="font-medium">Vé đã thanh toán:</span> {tickets.filter(t => t.status === 'paid').length}</div>
-            <div><span className="font-medium">Vé chờ thanh toán:</span> {tickets.filter(t => t.status === 'pending').length}</div>
+            <div><span className="font-medium">Tổng vé đã đặt:</span> {tickets.reduce((sum, t) => sum + t.quantity_total, 0)}</div>
+            <div><span className="font-medium">Vé đã thanh toán:</span> {tickets.filter(t => t.status === 'paid').reduce((sum, t) => sum + t.quantity_total, 0)}</div>
+            <div><span className="font-medium">Vé chờ thanh toán:</span> {tickets.filter(t => t.status === 'pending').reduce((sum, t) => sum + t.quantity_total, 0)}</div>
           </div>
         </div>
+      </div>
+
+      {/* Change Password Section */}
+      <div className="mb-8">
+        <ChangePasswordSection />
       </div>
 
       {/* Tickets Section */}
@@ -151,7 +157,7 @@ const Profile = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.type}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{ticket.quantity_total}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {(ticket.price * ticket.quantity_total).toLocaleString()} đ
+                      {ticket.price.toLocaleString()} đ
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(ticket.createdAt).toLocaleDateString('vi-VN')}
@@ -172,10 +178,11 @@ const Profile = () => {
                           className="bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 transition-colors"
                           onClick={() => navigate('/checkout', { 
                             state: { 
+                              existingTicketId: ticket._id, // Pass existing ticket ID
                               bookingData: {
                                 eventId: ticket.eventId._id,
                                 type: ticket.type,
-                                price: ticket.price,
+                                price: ticket.price / ticket.quantity_total, // Unit price
                                 quantity: ticket.quantity_total
                               }
                             }

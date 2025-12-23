@@ -1,167 +1,205 @@
-import React, { useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/store';
-import { logout as logoutAction } from '@/store/slices/authSlice';
+import React, { useState, useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/hooks/useAuth'
+import LoginModal from '../auth/LoginModal'
+import RegisterModal from '../auth/RegisterModal'
 
 const Navbar: React.FC = () => {
-  const user = useSelector((state: RootState) => state.auth.user);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('VN');
-  const phoneNumber = import.meta.env.VITE_CONTACT_PHONE || '0123456789';
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false)
 
   const handleLogout = useCallback(async () => {
     try {
-      dispatch(logoutAction());
-      navigate('/');
+      logout()
+      navigate('/')
     } catch (error) {
-      console.error('Đăng xuất thất bại:', error);
+      console.error('Đăng xuất thất bại:', error)
     }
-  }, [dispatch, navigate]);
+  }, [logout, navigate])
 
-  const handleLanguageChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newLanguage = e.target.value;
-      setLanguage(newLanguage);
-      // Implement i18n logic here
-    },
-    []
-  );
+  const handleSwitchToRegister = () => {
+    setIsLoginModalOpen(false)
+    setIsRegisterModalOpen(true)
+  }
 
-  const renderUserMenu = useCallback(
-    (isMobile = false) => {
-      const className = isMobile
-        ? 'text-gray-600 hover:text-blue-500 block px-3 py-2 rounded-md text-base font-medium'
-        : 'text-gray-600 hover:text-blue-500';
-      const buttonClassName = isMobile
-        ? 'w-full text-left bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition-colors text-base font-medium'
-        : 'bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors';
-
-      if (user) {
-        return (
-          <>
-            <Link to="/profile" className={className}>
-              Hồ sơ
-            </Link>
-            <button onClick={handleLogout} className={buttonClassName}>
-              Đăng xuất
-            </button>
-          </>
-        );
-      }
-      return (
-        <>
-          <Link to="/login" className={className}>
-            Đăng nhập
-          </Link>
-          <Link
-            to="/register"
-            className={
-              isMobile
-                ? 'bg-blue-500 text-white block px-3 py-2 rounded-md hover:bg-blue-600 transition-colors text-base font-medium'
-                : 'bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors'
-            }
-          >
-            Đăng ký
-          </Link>
-        </>
-      );
-    },
-    [user, handleLogout]
-  );
+  const handleSwitchToLogin = () => {
+    setIsRegisterModalOpen(false)
+    setIsLoginModalOpen(true)
+  }
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="ml-2 text-xl font-bold text-gray-800">TicketHub</span>
+    <>
+      <nav className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                  />
+                </svg>
+              </div>
+              <span className="text-xl font-bold text-gray-900">TicketHub</span>
             </Link>
-          </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-           
-            <div className="flex items-center text-gray-600">
-              <span className="mr-2">📞</span>
-              <span>{phoneNumber}</span>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              <Link
+                to="/events"
+                className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+              >
+                Sự kiện
+              </Link>
+
+              {user ? (
+                <>
+                  <Link
+                    to="/profile"
+                    className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                  >
+                    Hồ sơ
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-700 hover:text-red-600 font-medium transition-colors"
+                  >
+                    Đăng xuất
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsLoginModalOpen(true)}
+                    className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                  >
+                    Đăng nhập
+                  </button>
+                  <button
+                    onClick={() => setIsRegisterModalOpen(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                  >
+                    Đăng ký
+                  </button>
+                </>
+              )}
             </div>
-            <label htmlFor="language-select" className="sr-only">
-              Chọn ngôn ngữ
-            </label>
-            <select
-              id="language-select"
-              value={language}
-              onChange={handleLanguageChange}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="VN">VN</option>
-              <option value="EN">EN</option>
-            </select>
-            {renderUserMenu()}
-          </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+            {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              aria-label="Mở/đóng menu chính"
-              aria-expanded={isMenuOpen}
+              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+              aria-label="Menu"
             >
               <svg
-                className="h-6 w-6"
-                xmlns="http://www.w3.org/2000/svg"
+                className="w-6 h-6"
                 fill="none"
-                viewBox="0 0 24 24"
                 stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d={isMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'}
-                />
+                {isMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
               </svg>
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Mobile menu */}
-      <div
-        className={`${
-          isMenuOpen ? 'block' : 'hidden'
-        } md:hidden transition-all duration-300 ease-in-out transform ${
-          isMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-        }`}
-      >
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          
-          <div className="flex items-center text-gray-600 px-3 py-2">
-            <span className="mr-2">📞</span>
-            <span>{phoneNumber}</span>
-          </div>
-          <label htmlFor="mobile-language-select" className="sr-only">
-            Chọn ngôn ngữ
-          </label>
-          <select
-            id="mobile-language-select"
-            value={language}
-            onChange={handleLanguageChange}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="VN">Tiếng Việt</option>
-            <option value="EN">Tiếng Anh</option>
-          </select>
-          {renderUserMenu(true)}
-        </div>
-      </div>
-    </nav>
-  );
-};
+          {/* Mobile menu */}
+          {isMenuOpen && (
+            <div className="md:hidden py-4 border-t border-gray-200">
+              <div className="space-y-2">
+                <Link
+                  to="/events"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Sự kiện
+                </Link>
 
-export default React.memo(Navbar);
+                {user ? (
+                  <>
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Hồ sơ
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout()
+                        setIsMenuOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+                    >
+                      Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsLoginModalOpen(true)
+                        setIsMenuOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+                    >
+                      Đăng nhập
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsRegisterModalOpen(true)
+                        setIsMenuOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg"
+                    >
+                      Đăng ký
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* Modals */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSwitchToRegister={handleSwitchToRegister}
+      />
+      <RegisterModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+    </>
+  )
+}
+
+export default React.memo(Navbar)

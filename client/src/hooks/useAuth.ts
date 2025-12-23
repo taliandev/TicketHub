@@ -5,10 +5,24 @@ import { loginStart, loginSuccess, loginFailure, logout as logoutAction, updateU
 import api, { API_ENDPOINTS } from '@/lib/api'
 import { handleApiError } from '@/lib/errorHandler'
 
+interface User {
+  id: string
+  username: string
+  email: string
+  fullName: string
+  role: 'user' | 'admin' | 'organizer'
+}
+
+interface AuthResponse {
+  user: User
+  token: string
+}
+
 interface LoginCredentials {
   identifier?: string  // email or username
   email?: string       // for backward compatibility
   password: string
+  [key: string]: unknown // Add index signature
 }
 
 interface RegisterData {
@@ -16,6 +30,7 @@ interface RegisterData {
   email: string
   password: string
   fullName: string
+  [key: string]: unknown // Add index signature
 }
 
 export const useAuth = () => {
@@ -28,7 +43,7 @@ export const useAuth = () => {
     async (credentials: LoginCredentials) => {
       try {
         dispatch(loginStart())
-        const response = await api.post(API_ENDPOINTS.LOGIN, credentials)
+        const response = await api.post<AuthResponse>(API_ENDPOINTS.LOGIN, credentials)
         dispatch(loginSuccess(response.data))
         return { success: true, data: response.data }
       } catch (error) {
@@ -44,7 +59,7 @@ export const useAuth = () => {
     async (data: RegisterData) => {
       try {
         dispatch(loginStart())
-        const response = await api.post(API_ENDPOINTS.REGISTER, data)
+        const response = await api.post<AuthResponse>(API_ENDPOINTS.REGISTER, data)
         dispatch(loginSuccess(response.data))
         return { success: true, data: response.data }
       } catch (error) {
@@ -61,7 +76,7 @@ export const useAuth = () => {
   }, [dispatch])
 
   const updateProfile = useCallback(
-    (userData: any) => {
+    (userData: User) => {
       dispatch(updateUser(userData))
     },
     [dispatch]

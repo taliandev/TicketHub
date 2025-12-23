@@ -40,6 +40,7 @@ interface TicketUIProps {
   ticket: UserTicket;
 }
 
+// Export the component
 const TicketUI: React.FC<TicketUIProps> = ({ ticket }) => {
   const formatDate = (dateString?: string | Date) => {
     if (!dateString) return 'TBD';
@@ -148,3 +149,5 @@ const TicketUI: React.FC<TicketUIProps> = ({ ticket }) => {
   );
 };
 
+
+export default TicketUI;

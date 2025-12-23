@@ -32,19 +32,19 @@ export const API_ENDPOINTS = {
 
 // Generic API functions
 export const api = {
-  get: <T = any>(url: string, params?: any): Promise<AxiosResponse<T>> => 
+  get: <T = unknown>(url: string, params?: Record<string, unknown>): Promise<AxiosResponse<T>> => 
     axiosInstance.get(url, { params }),
     
-  post: <T = any>(url: string, data?: any): Promise<AxiosResponse<T>> => 
+  post: <T = unknown>(url: string, data?: Record<string, unknown>): Promise<AxiosResponse<T>> => 
     axiosInstance.post(url, data),
     
-  put: <T = any>(url: string, data?: any): Promise<AxiosResponse<T>> => 
+  put: <T = unknown>(url: string, data?: Record<string, unknown>): Promise<AxiosResponse<T>> => 
     axiosInstance.put(url, data),
     
-  patch: <T = any>(url: string, data?: any): Promise<AxiosResponse<T>> => 
+  patch: <T = unknown>(url: string, data?: Record<string, unknown>): Promise<AxiosResponse<T>> => 
     axiosInstance.patch(url, data),
     
-  delete: <T = any>(url: string): Promise<AxiosResponse<T>> => 
+  delete: <T = unknown>(url: string): Promise<AxiosResponse<T>> => 
     axiosInstance.delete(url),
 }
 

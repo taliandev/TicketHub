@@ -39,7 +39,7 @@ export const useUpdateUser = () => {
   const queryClient = useQueryClient();
   
   return useMutation(
-    async ({ userId, updates }: { userId: string; updates: any }) => {
+    async ({ userId, updates }: { userId: string; updates: Record<string, unknown> }) => {
       const { data } = await api.put(`/admin/users/${userId}`, updates);
       return data;
     },

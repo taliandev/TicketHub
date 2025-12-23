@@ -3,14 +3,45 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import axiosInstance from '@/lib/axios';
+import { AxiosError } from 'axios';
 import QRScanner from '@/components/QRScanner';
+
+interface TicketInfo {
+  _id: string;
+  ticketCode: string;
+  status: string;
+  type: string;
+  userId?: {
+    fullName: string;
+    email: string;
+  };
+  eventId?: {
+    title: string;
+    date: string;
+    location: string;
+  };
+  user?: {
+    fullName?: string;
+    username?: string;
+  };
+  event?: {
+    title?: string;
+  };
+  quantity_total?: number;
+  usedAt?: string;
+}
+
+interface ErrorResponse {
+  message: string;
+  ticket?: TicketInfo;
+}
 
 const CheckIn = () => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
   const [ticketCode, setTicketCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [ticketInfo, setTicketInfo] = useState<any>(null);
+  const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
   const [checkInSuccess, setCheckInSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showScanner, setShowScanner] = useState(false);
@@ -46,13 +77,14 @@ const CheckIn = () => {
         setTicketInfo(null);
         setCheckInSuccess(false);
       }, 3000);
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || 'Có lỗi xảy ra';
+    } catch (error) {
+      const err = error as AxiosError<ErrorResponse>;
+      const errorMsg = err.response?.data?.message || 'Có lỗi xảy ra';
       setErrorMessage(errorMsg);
       
       // Show ticket info even if check-in fails (for debugging)
-      if (error.response?.data?.ticket) {
-        setTicketInfo(error.response.data.ticket);
+      if (err.response?.data?.ticket) {
+        setTicketInfo(err.response.data.ticket);
       }
     } finally {
       setIsLoading(false);

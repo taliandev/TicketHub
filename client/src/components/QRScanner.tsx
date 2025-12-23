@@ -6,11 +6,16 @@ interface QRScannerProps {
   onClose: () => void;
 }
 
+interface Camera {
+  id: string;
+  label: string;
+}
+
 const QRScanner = ({ onScanSuccess, onClose }: QRScannerProps) => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState('');
-  const [cameras, setCameras] = useState<any[]>([]);
+  const [cameras, setCameras] = useState<Camera[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
 
   useEffect(() => {
@@ -37,7 +42,7 @@ const QRScanner = ({ onScanSuccess, onClose }: QRScannerProps) => {
         scannerRef.current.stop().catch(console.error);
       }
     };
-  }, []);
+  }, [isScanning]);
 
   const startScanning = async () => {
     if (!selectedCamera) {
@@ -68,9 +73,10 @@ const QRScanner = ({ onScanSuccess, onClose }: QRScannerProps) => {
 
       setIsScanning(true);
       setError('');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error starting scanner:', err);
-      setError('Không thể khởi động camera: ' + err.message);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError('Không thể khởi động camera: ' + errorMessage);
     }
   };
 

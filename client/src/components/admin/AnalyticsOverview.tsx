@@ -1,9 +1,28 @@
 import { useAdminStats, useRecentActivities } from '@/hooks/useAdminDashboard';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
+interface Activity {
+  type: string;
+  [key: string]: unknown;
+}
+
+interface ActivityType {
+  [key: string]: number;
+}
+
+interface AdminStats {
+  totalUsers: number;
+  totalEvents: number;
+  totalRevenue: number;
+  totalTickets: number;
+  activeEvents: number;
+  monthlyGrowth: number;
+  newUsersThisMonth: number;
+}
+
 const AnalyticsOverview = () => {
   const { data: stats, isLoading } = useAdminStats();
-  const { data: activities = [] } = useRecentActivities(50);
+  const { data: activitiesData = [] } = useRecentActivities(50);
 
   if (isLoading) {
     return (
@@ -13,14 +32,15 @@ const AnalyticsOverview = () => {
     );
   }
 
-  // Calculate analytics
-  const userGrowth = stats?.newUsersThisMonth || 0;
-  const activeEvents = stats?.activeEvents || 0;
-  const totalEvents = stats?.totalEvents || 0;
+  const adminStats = stats as AdminStats | undefined;
+  const activities = (activitiesData as Activity[]) || [];
+
+  const userGrowth = adminStats?.newUsersThisMonth || 0;
+  const activeEvents = adminStats?.activeEvents || 0;
+  const totalEvents = adminStats?.totalEvents || 0;
   const eventActiveRate = totalEvents > 0 ? (activeEvents / totalEvents * 100) : 0;
 
-  // Activity breakdown
-  const activityTypes = activities.reduce((acc: any, activity: any) => {
+  const activityTypes = activities.reduce((acc: ActivityType, activity: Activity) => {
     acc[activity.type] = (acc[activity.type] || 0) + 1;
     return acc;
   }, {});
@@ -118,8 +138,8 @@ const AnalyticsOverview = () => {
                 </div>
               </div>
               <span className="text-xl font-bold text-green-600">
-                {stats?.totalTickets && stats?.totalUsers 
-                  ? ((stats.totalTickets / stats.totalUsers) * 100).toFixed(1) 
+                {adminStats?.totalTickets && adminStats?.totalUsers 
+                  ? ((adminStats.totalTickets / adminStats.totalUsers) * 100).toFixed(1) 
                   : 0}%
               </span>
             </div>
@@ -137,8 +157,8 @@ const AnalyticsOverview = () => {
                 </div>
               </div>
               <span className="text-xl font-bold text-blue-600">
-                {stats?.totalRevenue && stats?.totalUsers
-                  ? (stats.totalRevenue / stats.totalUsers / 1000).toFixed(0)
+                {adminStats?.totalRevenue && adminStats?.totalUsers
+                  ? (adminStats.totalRevenue / adminStats.totalUsers / 1000).toFixed(0)
                   : 0}K
               </span>
             </div>
@@ -156,8 +176,8 @@ const AnalyticsOverview = () => {
                 </div>
               </div>
               <span className="text-xl font-bold text-purple-600">
-                {stats?.totalTickets && stats?.totalEvents
-                  ? (stats.totalTickets / stats.totalEvents).toFixed(0)
+                {adminStats?.totalTickets && adminStats?.totalEvents
+                  ? (adminStats.totalTickets / adminStats.totalEvents).toFixed(0)
                   : 0}
               </span>
             </div>
@@ -170,32 +190,32 @@ const AnalyticsOverview = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Tổng người dùng</span>
-              <span className="text-lg font-semibold text-gray-900">{stats?.totalUsers?.toLocaleString()}</span>
+              <span className="text-lg font-semibold text-gray-900">{adminStats?.totalUsers?.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Tổng sự kiện</span>
-              <span className="text-lg font-semibold text-gray-900">{stats?.totalEvents}</span>
+              <span className="text-lg font-semibold text-gray-900">{adminStats?.totalEvents}</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Sự kiện đang hoạt động</span>
-              <span className="text-lg font-semibold text-gray-900">{stats?.activeEvents}</span>
+              <span className="text-lg font-semibold text-gray-900">{adminStats?.activeEvents}</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Tổng vé đã bán</span>
-              <span className="text-lg font-semibold text-gray-900">{stats?.totalTickets?.toLocaleString()}</span>
+              <span className="text-lg font-semibold text-gray-900">{adminStats?.totalTickets?.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-sm text-gray-600">Tổng doanh thu</span>
               <span className="text-lg font-semibold text-gray-900">
-                {((stats?.totalRevenue || 0) / 1000000).toFixed(1)}M VND
+                {((adminStats?.totalRevenue || 0) / 1000000).toFixed(1)}M VND
               </span>
             </div>
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-gray-600">Tăng trưởng tháng này</span>
               <span className={`text-lg font-semibold ${
-                (stats?.monthlyGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                (adminStats?.monthlyGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
               }`}>
-                {stats?.monthlyGrowth >= 0 ? '+' : ''}{stats?.monthlyGrowth?.toFixed(1)}%
+                {adminStats?.monthlyGrowth && adminStats.monthlyGrowth >= 0 ? '+' : ''}{adminStats?.monthlyGrowth?.toFixed(1)}%
               </span>
             </div>
           </div>
@@ -225,7 +245,7 @@ const AnalyticsOverview = () => {
                   <span>Khuyến khích organizers tạo thêm sự kiện mới</span>
                 </li>
               )}
-              {(stats?.monthlyGrowth || 0) < 0 && (
+              {(adminStats?.monthlyGrowth || 0) < 0 && (
                 <li className="flex items-start space-x-2">
                   <span className="text-blue-600 mt-0.5">•</span>
                   <span>Doanh thu đang giảm, cần review chiến lược pricing và promotion</span>

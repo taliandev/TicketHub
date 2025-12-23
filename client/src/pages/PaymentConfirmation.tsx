@@ -39,7 +39,7 @@ const PaymentConfirmation = () => {
     }
 
     try {
-      const response = await axios.patch(`/api/tickets/${ticketId}`, {
+      await axios.patch(`/api/tickets/${ticketId}`, {
         status: 'paid',
         paymentMethod: paymentMethod
       });

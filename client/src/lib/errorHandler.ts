@@ -4,7 +4,7 @@ export interface ApiError {
   message: string
   status?: number
   code?: string
-  details?: any
+  details?: Record<string, unknown>
 }
 
 export const handleApiError = (error: unknown): ApiError => {

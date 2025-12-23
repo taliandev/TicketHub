@@ -25,26 +25,6 @@ const Checkout = () => {
   const bookingData = locationState?.bookingData;
   const existingTicketId = locationState?.existingTicketId;
 
-  // Debug log
-  
-
-  // Redirect if no booking data (dùng useEffect)
-  React.useEffect(() => {
-    if (!bookingData) {
-      navigate('/events');
-    }
-  }, [bookingData, navigate]);
-
-  // Redirect if no user (not logged in)
-  React.useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
-  if (!user) return null;
-
-  if (!bookingData) return null;
-
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
@@ -58,7 +38,18 @@ const Checkout = () => {
   const [reservationId, setReservationId] = useState<string>('');
   const [ttl, setTtl] = useState<number>(0);
 
-  // Auto-show payment if existingTicketId is provided
+  React.useEffect(() => {
+    if (!bookingData) {
+      navigate('/events');
+    }
+  }, [bookingData, navigate]);
+
+  React.useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     if (existingTicketId) {
       setTicketId(existingTicketId);
@@ -90,12 +81,10 @@ const Checkout = () => {
     }
   };
 
-  // Create or reuse reservation on mount
   useEffect(() => {
     const ensureReservation = async () => {
       if (!bookingData || !user) return;
       try {
-        // Try reuse from storage
         if (reservationStorageKey) {
           const stored = localStorage.getItem(reservationStorageKey);
           if (stored) {
@@ -108,15 +97,15 @@ const Checkout = () => {
                   setTtl(r.data.ttlSeconds);
                   return;
                 }
-                // expired -> cleanup
                 localStorage.removeItem(reservationStorageKey);
               }
-            } catch (_) {
+            } catch {
               localStorage.removeItem(reservationStorageKey);
             }
           }
         }
-        // Avoid auto re-locking after expiry/reload within same session
+        
+        // IMPORTANT: Avoid auto re-locking after expiry/reload within same session
         if (hasAutoReservedKey && sessionStorage.getItem(hasAutoReservedKey) === '1') {
           setError('Thời gian giữ chỗ đã hết. Vui lòng giữ chỗ lại để tiếp tục.');
           return;
@@ -128,20 +117,16 @@ const Checkout = () => {
       }
     };
     ensureReservation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingData?.eventId, bookingData?.type, bookingData?.quantity, user?.id]);
+  }, [bookingData?.eventId, bookingData?.type, bookingData?.quantity, user?.id, reservationStorageKey]);
 
-  // When TTL reaches 0, mark expired state
   useEffect(() => {
     if (ttl === 0 && reservationId) {
-      // Clear stored reservation so user must explicitly re-hold
       if (reservationStorageKey) localStorage.removeItem(reservationStorageKey);
       setReservationId('');
       setError('Thời gian giữ chỗ đã hết. Vui lòng giữ chỗ lại để tiếp tục.');
     }
   }, [ttl, reservationId]);
 
-  // Countdown timer
   useEffect(() => {
     if (ttl <= 0) return;
     
@@ -156,29 +141,27 @@ const Checkout = () => {
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [reservationId]); // Only re-run when reservation changes
+  }, [ttl, reservationId]);
 
-  // Poll TTL from server every 15s to stay in sync
   useEffect(() => {
     if (!reservationId) return;
     const interval = setInterval(async () => {
       try {
         const r = await axios.get(`/api/reservations/${reservationId}/ttl`);
         if (typeof r.data.ttlSeconds === 'number') setTtl(r.data.ttlSeconds);
-      } catch (_) {}
+      } catch {
+        // ignore
+      }
     }, 15000);
     return () => clearInterval(interval);
   }, [reservationId]);
-
-  // IMPORTANT: Do not auto-cancel on unmount (reload) to preserve TTL across reloads.
-  // We will cancel explicitly on user Cancel action.
 
   const handleCancelCheckout = async () => {
     try {
       if (reservationId) {
         await axios.delete(`/api/reservations/${reservationId}`);
       }
-    } catch (_) {
+    } catch {
       // ignore
     } finally {
       if (reservationStorageKey) {
@@ -189,15 +172,12 @@ const Checkout = () => {
   };
 
   const formatPhoneNumber = (phone: string) => {
-    // Loại bỏ tất cả ký tự không phải số
     const cleaned = phone.replace(/\D/g, '');
     
-    // Nếu bắt đầu bằng 84, chuyển thành 0
     if (cleaned.startsWith('84')) {
       return '0' + cleaned.substring(2);
     }
     
-    // Nếu bắt đầu bằng +84, chuyển thành 0
     if (cleaned.startsWith('84')) {
       return '0' + cleaned.substring(2);
     }
@@ -215,13 +195,18 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user || !bookingData) {
+      setError('Thông tin không hợp lệ');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
     const formattedPhone = formatPhoneNumber(formData.phone);
 
     try {
-      // If existingTicketId is provided, skip ticket creation and go straight to payment
       if (existingTicketId) {
         console.log('Using existing ticket:', existingTicketId);
         setTicketId(existingTicketId);
@@ -230,11 +215,11 @@ const Checkout = () => {
         return;
       }
 
-      // Otherwise, create new ticket
-      console.log('Creating new ticket:', {
+      
+      await axios.post('/api/tickets', {
         eventId: bookingData.eventId,
         type: bookingData.type,
-        price: bookingData.price * bookingData.quantity, // Total price
+        price: bookingData.price * bookingData.quantity, 
         quantity_total: bookingData.quantity,
         status: 'pending',
         extraInfo: {
@@ -244,25 +229,10 @@ const Checkout = () => {
           cccd: formData.cccd,
         },
         userId: user.id,
+      }).then(response => {
+        setTicketId(response.data._id);
+        setShowPayment(true);
       });
-
-      const response = await axios.post('/api/tickets', {
-        eventId: bookingData.eventId,
-        type: bookingData.type,
-        price: bookingData.price * bookingData.quantity, // Total price, not unit price
-        quantity_total: bookingData.quantity,
-        status: 'pending',
-        extraInfo: {
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formattedPhone,
-          cccd: formData.cccd,
-        },
-        userId: user.id,
-      });
-
-      setTicketId(response.data._id);
-      setShowPayment(true);
 
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
@@ -274,7 +244,7 @@ const Checkout = () => {
     }
   };
 
-  const handlePaymentSuccess = (paymentData: any) => {
+  const handlePaymentSuccess = () => {
     alert('Thanh toán thành công! Vé của bạn đã được kích hoạt.');
     navigate('/profile');
   };
@@ -286,6 +256,9 @@ const Checkout = () => {
   const handlePaymentCancel = () => {
     setShowPayment(false);
   };
+
+  if (!user) return null;
+  if (!bookingData) return null;
 
   if (showPayment && ticketId) {
     return (
@@ -443,7 +416,15 @@ const Checkout = () => {
             <div className="mt-3">
               <button
                 type="button"
-                onClick={async () => { try { await createReservationNow(); setError(''); if (hasAutoReservedKey) sessionStorage.setItem(hasAutoReservedKey, '1'); } catch { setError('Không thể giữ chỗ. Vui lòng thử lại.'); } }}
+                onClick={async () => { 
+                  try { 
+                    await createReservationNow(); 
+                    setError(''); 
+                    if (hasAutoReservedKey) sessionStorage.setItem(hasAutoReservedKey, '1'); 
+                  } catch { 
+                    setError('Không thể giữ chỗ. Vui lòng thử lại.'); 
+                  } 
+                }}
                 className="w-full py-3 px-4 rounded-md bg-yellow-600 text-white font-medium hover:bg-yellow-700"
               >
                 Giữ chỗ lại

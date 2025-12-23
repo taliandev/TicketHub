@@ -22,8 +22,9 @@ const ForgotPassword = () => {
 
       setMessage(response.data.message);
       setEmail('');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại');
+    } catch (err) {
+      const error = err as AxiosError<ApiError>;
+      setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại');
     } finally {
       setIsLoading(false);
     }

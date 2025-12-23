@@ -11,23 +11,48 @@ interface EventsTableProps {
   userRole?: 'admin' | 'organizer' | 'user';
 }
 
+interface Event {
+  _id: string;
+  title: string;
+  image: string;
+  location: string;
+  organizerId?: {
+    fullName: string;
+    email: string;
+  };
+  date: string;
+  time: string;
+  category: string;
+  status: string;
+}
+
+interface EventsResponse {
+  events: Event[];
+  totalPages: number;
+  currentPage: number;
+  total: number;
+}
+
 const EventsTable = ({ userRole = 'admin' }: EventsTableProps) => {
   const isAdmin = userRole === 'admin';
   
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [editingEvent, setEditingEvent] = useState<any>(null);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
-  // Use appropriate hooks based on role
   const adminQuery = useAdminEvents(page, 10, search, statusFilter, { enabled: isAdmin });
   const organizerQuery = useOrganizerEvents(page, 10, search, statusFilter, { enabled: !isAdmin });
+  const deleteAdminMutation = useDeleteEvent();
+  const deleteOrganizerMutation = useDeleteOrganizerEvent();
   
-  const { data, isLoading } = isAdmin ? adminQuery : organizerQuery;
-  const deleteEventMutation = isAdmin ? useDeleteEvent() : useDeleteOrganizerEvent();
+  const { data: rawData, isLoading } = isAdmin ? adminQuery : organizerQuery;
+  const deleteEventMutation = isAdmin ? deleteAdminMutation : deleteOrganizerMutation;
 
-  const handleEdit = (event: any) => {
+  const data = rawData as EventsResponse | undefined;
+
+  const handleEdit = (event: Event) => {
     setEditingEvent(event);
     setIsEditModalOpen(true);
   };
@@ -141,7 +166,7 @@ const EventsTable = ({ userRole = 'admin' }: EventsTableProps) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {data?.events?.map((event: any) => {
+              {data?.events?.map((event: Event) => {
                 const eventStatus = getEventStatus(event.date);
                 
                 return (
@@ -226,7 +251,7 @@ const EventsTable = ({ userRole = 'admin' }: EventsTableProps) => {
         </div>
 
         {/* Pagination */}
-        {data?.totalPages > 1 && (
+        {data && data.totalPages > 1 && (
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Trang {data.currentPage} / {data.totalPages} - Tổng {data.total} sự kiện

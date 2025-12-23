@@ -1,5 +1,11 @@
 import { useState } from 'react';
 import axiosInstance from '@/lib/axios';
+import { AxiosError } from 'axios';
+
+interface ApiError {
+  message: string;
+  errors?: Array<{ field: string; message: string }>;
+}
 
 const ChangePasswordSection = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -41,8 +47,9 @@ const ChangePasswordSection = () => {
       
       // Clear message after 3 seconds
       setTimeout(() => setMessage(''), 3000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại');
+    } catch (err) {
+      const error = err as AxiosError<ApiError>;
+      setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại');
     } finally {
       setIsLoading(false);
     }

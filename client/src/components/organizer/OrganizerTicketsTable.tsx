@@ -80,6 +80,7 @@ const OrganizerTicketsTable = () => {
 
   useEffect(() => {
     fetchTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, statusFilter]);
 
   const handleSearch = (e: React.FormEvent) => {

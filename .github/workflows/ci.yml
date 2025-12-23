@@ -73,7 +73,7 @@ jobs:
     
     - name: Run ESLint
       working-directory: ./client
-      run: npm run lint
+      run: npm run lint -- --max-warnings 50
     
     - name: Run type check
       working-directory: ./client

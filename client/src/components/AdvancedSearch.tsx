@@ -37,7 +37,6 @@ const AdvancedSearch = () => {
   
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [loading, setLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const categories = [

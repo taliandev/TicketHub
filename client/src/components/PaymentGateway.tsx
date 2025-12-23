@@ -5,7 +5,7 @@ interface PaymentGatewayProps {
   amount: number;
   ticketId: string;
   reservationId?: string;
-  onSuccess: (paymentData: any) => void;
+  onSuccess: () => void;
   onError: (error: string) => void;
   onCancel: () => void;
 }
@@ -58,8 +58,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
 
     try {
       switch (method) {
-
-        case 'credit_card':
+        case 'credit_card': {
           // Tạo thanh toán Credit Card
           const creditCardResponse = await axios.post('/api/payments/credit-card', {
             amount,
@@ -69,24 +68,27 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
           setPaymentUrl(creditCardResponse.data.paymentUrl);
           setTransactionId(creditCardResponse.data.transactionId);
           break;
+        }
 
-          case 'COD':
-            // Tạo thanh toán COD
-            const codResponse = await axios.post('/api/payments/cod', {
-              amount,
-              ticketId,
-              returnUrl: `${window.location.origin}/payment-success`
-            });
-            setPaymentUrl(codResponse.data.paymentUrl);
-            setTransactionId(codResponse.data.transactionId);
-            break;
+        case 'COD': {
+          // Tạo thanh toán COD
+          const codResponse = await axios.post('/api/payments/cod', {
+            amount,
+            ticketId,
+            returnUrl: `${window.location.origin}/payment-success`
+          });
+          setPaymentUrl(codResponse.data.paymentUrl);
+          setTransactionId(codResponse.data.transactionId);
+          break;
+        }
         
-        case 'bank_transfer':
+        case 'bank_transfer': {
           // Tạo thông tin chuyển khoản
           setTransactionId(`TXN-${Date.now()}`);
           break;
+        }
         
-        case 'qr_code':
+        case 'qr_code': {
           // Tạo QR code thanh toán
           const qrResponse = await axios.post('/api/payments/create-qr', {
             amount,
@@ -97,8 +99,9 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
           setQrCodeUrl(qrResponse.data.qrCodeUrl);
           setTransactionId(qrResponse.data.transactionId);
           break;
+        }
         
-        case 'momo':
+        case 'momo': {
           // Tạo thanh toán Momo
           const momoResponse = await axios.post('/api/payments/momo', {
             amount,
@@ -109,8 +112,9 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
           setPaymentUrl(momoResponse.data.payUrl);
           setTransactionId(momoResponse.data.transactionId);
           break;
+        }
         
-        case 'vnpay':
+        case 'vnpay': {
           // Tạo thanh toán VNPay
           const vnpayResponse = await axios.post('/api/payments/vnpay', {
             amount,
@@ -121,6 +125,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
           setPaymentUrl(vnpayResponse.data.paymentUrl);
           setTransactionId(vnpayResponse.data.transactionId);
           break;
+        }
       }
     } catch (error) {
       onError('Không thể khởi tạo thanh toán. Vui lòng thử lại.');
@@ -145,7 +150,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
     try {
       const response = await axios.get(`/api/payments/status/${transactionId}`);
       if (response.data.status === 'paid') {
-        onSuccess(response.data);
+        onSuccess();
       } else {
         alert('Thanh toán chưa hoàn tất. Vui lòng thử lại sau.');
       }

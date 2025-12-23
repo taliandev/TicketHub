@@ -31,7 +31,7 @@ export const useCreateEvent = () => {
   const queryClient = useQueryClient();
   
   return useMutation(
-    async (eventData: any) => {
+    async (eventData: Record<string, unknown>) => {
       const { data } = await api.post('/organizer/events', eventData);
       return data;
     },
@@ -48,7 +48,7 @@ export const useUpdateOrganizerEvent = () => {
   const queryClient = useQueryClient();
   
   return useMutation(
-    async ({ eventId, updates }: { eventId: string; updates: any }) => {
+    async ({ eventId, updates }: { eventId: string; updates: Record<string, unknown> }) => {
       const { data } = await api.put(`/organizer/events/${eventId}`, updates);
       return data;
     },

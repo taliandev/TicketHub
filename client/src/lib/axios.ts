@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
 // API Configuration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_URL
 const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 10000
 
 // Create axios instance

@@ -65,7 +65,7 @@ const AdvancedSearch = () => {
     }
 
     try {
-      const response = await axios.get(`http://localhost:3001/api/search/suggestions?query=${query}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/search/suggestions?query=${query}`);
       setSuggestions(response.data.suggestions);
       setShowSuggestions(true);
     } catch (error) {

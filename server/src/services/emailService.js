@@ -234,7 +234,7 @@ export const sendTicketEmail = async (ticketData) => {
           </div>
 
           <div style="text-align: center;">
-            <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/profile" class="button">
+            <a href="${process.env.CLIENT_URL }/profile" class="button">
               View My Tickets
             </a>
           </div>

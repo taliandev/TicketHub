@@ -40,7 +40,7 @@ jobs:
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
         working-directory: ./client
-        vercel-args: '--prod'
+        vercel-args: '--prod --confirm'
 
   # Deploy Backend to Render
   deploy-backend:

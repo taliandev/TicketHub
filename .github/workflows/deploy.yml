@@ -42,7 +42,7 @@ jobs:
         working-directory: ./client
         vercel-args: '--prod'
 
-  # Deploy Backend to Render/Railway
+  # Deploy Backend to Render
   deploy-backend:
     name: Deploy Backend
     runs-on: ubuntu-latest

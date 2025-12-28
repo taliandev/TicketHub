@@ -62,7 +62,6 @@ const QRScanner = ({ onScanSuccess, onClose }: QRScannerProps) => {
         },
         (decodedText) => {
           // Success callback
-          console.log('QR Code detected:', decodedText);
           onScanSuccess(decodedText);
           stopScanning();
         },

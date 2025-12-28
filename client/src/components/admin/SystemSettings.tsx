@@ -16,8 +16,7 @@ const SystemSettings = () => {
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
-    // TODO: Implement save to backend
-    console.log('Saving settings:', settings);
+ 
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };

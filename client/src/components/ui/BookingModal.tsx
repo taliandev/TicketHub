@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { setBooking } from '@/store/slices/bookingSlice';
+import LoginModal from '@/components/auth/LoginModal';
+import RegisterModal from '@/components/auth/RegisterModal';
+import { Link } from 'react-router-dom';
 
 export interface TicketType {
   type: string;
@@ -20,19 +23,92 @@ interface BookingModalProps {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, eventId, ticketTypes }) => {
-  const user = useSelector((state: RootState) => state.auth.user);
+  const user = useSelector((state: RootState) => (state as any).auth?.user);
   const [selectedType, setSelectedType] = useState<TicketType | null>(ticketTypes[0] || null);
   const [quantity, setQuantity] = useState(1);
   const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const handleSwitchToRegister = () => {
+    setError('');
+    setShowLoginModal(false);
+    setShowRegisterModal(true);
+  };
+
+  const handleSwitchToLogin = () => {
+    setError('');
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
+  };
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false);
+    setShowRegisterModal(false);
+    if (pendingBooking && selectedType) {
+      const total = selectedType.price * quantity;
+      const bookingData = {
+        eventId,
+        type: selectedType.type,
+        price: selectedType.price,
+        quantity,
+      };
+      
+      dispatch(setBooking({
+        eventId,
+        title: '',
+        type: selectedType.type,
+        price: selectedType.price,
+        quantity,
+        total,
+      }));
+      onClose();
+      navigate('/checkout', { state: { bookingData } });
+    }
+  };
+
+  // Watch for user login
+  React.useEffect(() => {
+    if (user && pendingBooking) {
+      setTimeout(() => {
+        handleLoginSuccess();
+      }, 100);
+    }
+  }, [user, pendingBooking]);
+
   if (!open) return null;
+
 
   const total = selectedType ? selectedType.price * quantity : 0;
 
   const handleConfirm = () => {
+    
     if (!agreed || !selectedType || quantity < 1) return;
+    
+    // Check if user is logged in
+    if (!user) {
+      setError('Vui lòng đăng nhập để đặt vé.');
+      setPendingBooking(true);
+    
+      setTimeout(() => {
+        setShowLoginModal(true);
+      }, 800);
+      return;
+    }
+    
+    setError('');
+    // User is logged in, proceed to checkout
+    const bookingData = {
+      eventId,
+      type: selectedType.type,
+      price: selectedType.price,
+      quantity,
+    };
+    
     dispatch(setBooking({
       eventId,
       title: '',
@@ -42,34 +118,25 @@ const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, eventId, tic
       total,
     }));
     onClose();
-    navigate('/checkout');
+    navigate('/checkout', { state: { bookingData } });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-8 relative animate-fadeIn">
-        <button
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl font-bold"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          &times;
-        </button>
-        {!user ? (
-          <div className="text-center py-8">
-            <h2 className="text-xl font-bold mb-4">Vui lòng đăng nhập để đặt vé</h2>
-            <Link
-              to="/login"
-              className="inline-block bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition"
-            >
-              Đăng nhập
-            </Link>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Đặt vé</h2>
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {ticketTypes.map((ticket) => (
+    <>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-8 relative animate-fadeIn" style={{ display: showLoginModal || showRegisterModal ? 'none' : 'block' }}>
+          <button
+            className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            &times;
+          </button>
+          
+          <h2 className="text-2xl font-bold mb-6 text-center">Đặt vé</h2>
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ticketTypes.map((ticket) => (
                 <div
                   key={ticket.type}
                   className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedType?.type === ticket.type ? 'border-blue-500 bg-blue-50' : 'hover:border-blue-300'}`}
@@ -121,24 +188,48 @@ const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, eventId, tic
                 Tôi đồng ý với <Link to="/policy" className="text-blue-500 underline">chính sách của chúng tôi</Link>
               </label>
             </div>
+            {error && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 text-center">
+                {error}
+              </div>
+            )}
             <button
               className={`w-full py-2 rounded bg-blue-500 text-white font-semibold transition ${!agreed || !selectedType ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
               disabled={!agreed || !selectedType}
               onClick={handleConfirm}
             >
-              Xác nhận
+              Tiếp tục
             </button>
-          </>
-        )}
-      </div>
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.2s ease; }
-      `}</style>
-    </div>
+          </div>
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; transform: scale(0.95); }
+              to { opacity: 1; transform: scale(1); }
+            }
+            .animate-fadeIn { animation: fadeIn 0.2s ease; }
+          `}</style>
+        </div>
+      )}
+      
+      {/* Login/Register Modals - Higher z-index than BookingModal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => {
+          setShowLoginModal(false);
+          setPendingBooking(false);
+        }}
+        onSwitchToRegister={handleSwitchToRegister}
+        skipRedirect={true}
+      />
+      <RegisterModal 
+        isOpen={showRegisterModal} 
+        onClose={() => {
+          setShowRegisterModal(false);
+          setPendingBooking(false);
+        }}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+    </>
   );
 };
 

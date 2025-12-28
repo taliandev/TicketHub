@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import axios, { AxiosError } from 'axios';
 import PaymentGateway from '../components/PaymentGateway';
+import LoginModal from '../components/auth/LoginModal';
+import RegisterModal from '../components/auth/RegisterModal';
 
 interface BookingData {
   eventId: string;
@@ -25,6 +27,8 @@ const Checkout = () => {
   const bookingData = locationState?.bookingData;
   const existingTicketId = locationState?.existingTicketId;
 
+
+
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
@@ -37,6 +41,18 @@ const Checkout = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [reservationId, setReservationId] = useState<string>('');
   const [ttl, setTtl] = useState<number>(0);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+
+  const handleSwitchToRegister = () => {
+    setShowLoginModal(false);
+    setShowRegisterModal(true);
+  };
+
+  const handleSwitchToLogin = () => {
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
+  };
 
   React.useEffect(() => {
     if (!bookingData) {
@@ -46,9 +62,10 @@ const Checkout = () => {
 
   React.useEffect(() => {
     if (!user) {
-      navigate('/login');
+      // Show login modal instead of redirecting
+      setShowLoginModal(true);
     }
-  }, [user, navigate]);
+  }, [user]);
 
   useEffect(() => {
     if (existingTicketId) {
@@ -208,7 +225,6 @@ const Checkout = () => {
 
     try {
       if (existingTicketId) {
-        console.log('Using existing ticket:', existingTicketId);
         setTicketId(existingTicketId);
         setShowPayment(true);
         setLoading(false);
@@ -238,7 +254,6 @@ const Checkout = () => {
       const axiosError = err as AxiosError<ApiError>;
       const errorMessage = axiosError.response?.data?.message || 'Có lỗi xảy ra khi tạo vé. Vui lòng thử lại.';
       setError(errorMessage);
-      console.error('Error creating ticket:', axiosError.response ? axiosError.response.data : axiosError.message);
     } finally {
       setLoading(false);
     }
@@ -433,6 +448,19 @@ const Checkout = () => {
           )}
         </form>
       </div>
+
+      {/* Login/Register Modals */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)}
+        onSwitchToRegister={handleSwitchToRegister}
+        skipRedirect={true}
+      />
+      <RegisterModal 
+        isOpen={showRegisterModal} 
+        onClose={() => setShowRegisterModal(false)}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
     </div>
   );
 };

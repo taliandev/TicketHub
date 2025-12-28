@@ -138,7 +138,6 @@ const EventForm = ({ event, onSuccess, onCancel }: EventFormProps) => {
       }))
     };
 
-    console.log('Submitting event data:', submitData); // Debug log
 
     try {
       if (event) {

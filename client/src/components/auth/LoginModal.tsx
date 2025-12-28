@@ -19,9 +19,10 @@ interface LoginModalProps {
   isOpen: boolean
   onClose: () => void
   onSwitchToRegister: () => void
+  skipRedirect?: boolean // Add this prop to skip auto-redirect
 }
 
-export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
+export default function LoginModal({ isOpen, onClose, onSwitchToRegister, skipRedirect = false }: LoginModalProps) {
   const { login, loading } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
@@ -43,6 +44,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
       if (result.success) {
         reset()
         onClose()
+        
+        // Skip redirect if called from BookingModal or other components
+        if (skipRedirect) {
+          return
+        }
         
         // Redirect based on user role
         const userRole = result.data?.user?.role

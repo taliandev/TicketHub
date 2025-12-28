@@ -97,7 +97,6 @@ const CheckIn = () => {
   };
 
   const handleScanSuccess = (decodedText: string) => {
-    console.log('QR Scanned:', decodedText);
     setTicketCode(decodedText);
     setShowScanner(false);
     // Auto check-in after scan

@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/store'
 import { useEvent } from '@/hooks/useEvents'
 import { useRecentEvents } from '@/hooks/useRecentEvents'
 import { getErrorMessage } from '@/lib/errorHandler'
 import { getEventStatus, canBookEvent, formatEventDate } from '@/lib/eventUtils'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorMessage from '@/components/ui/ErrorMessage'
+import LoginModal from '@/components/auth/LoginModal'
+import RegisterModal from '@/components/auth/RegisterModal'
 import { TicketType } from '@/hooks/useEvents'
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const user = useSelector((state: RootState) => state.auth.user)
   const { data: event, isLoading, error, refetch } = useEvent(id)
   const { addRecentEvent } = useRecentEvents()
 
@@ -19,6 +24,9 @@ const EventDetail = () => {
   const [quantity, setQuantity] = useState<number>(1)
   const [agreed, setAgreed] = useState<boolean>(false)
   const [formError, setFormError] = useState<string>('')
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showRegisterModal, setShowRegisterModal] = useState(false)
+  const [pendingBooking, setPendingBooking] = useState(false)
 
   // Add to recent events when event loads
   useEffect(() => {
@@ -26,6 +34,40 @@ const EventDetail = () => {
       addRecentEvent(event._id)
     }
   }, [event?._id, addRecentEvent])
+
+  // Watch for user login after clicking continue
+  useEffect(() => {
+    if (user && pendingBooking) {
+      const selectedTicket = event?.ticketTypes.find((t) => t.name === selectedType)
+      if (selectedTicket) {
+        setPendingBooking(false)
+        setShowLoginModal(false)
+        setShowRegisterModal(false)
+        navigate('/checkout', {
+          state: {
+            bookingData: {
+              eventId: event?._id,
+              type: selectedType,
+              price: selectedTicket.price,
+              quantity,
+            },
+          },
+        })
+      }
+    }
+  }, [user, pendingBooking, event, selectedType, quantity, navigate])
+
+  const handleSwitchToRegister = () => {
+    setFormError('')
+    setShowLoginModal(false)
+    setShowRegisterModal(true)
+  }
+
+  const handleSwitchToLogin = () => {
+    setFormError('')
+    setShowRegisterModal(false)
+    setShowLoginModal(true)
+  }
 
   // Set default ticket type
   useEffect(() => {
@@ -63,6 +105,19 @@ const EventDetail = () => {
     }
 
     setFormError('')
+    
+    // Check if user is logged in
+    if (!user) {
+      setFormError('Vui lòng đăng nhập để đặt vé.')
+      setPendingBooking(true)
+      // Show modal after a short delay so user can see the message
+      setTimeout(() => {
+        setShowLoginModal(true)
+      }, 800)
+      return
+    }
+    
+    // User is logged in, proceed to checkout
     navigate('/checkout', {
       state: {
         bookingData: {
@@ -387,6 +442,25 @@ const EventDetail = () => {
           )}
         </div>
       </div>
+      
+      {/* Login/Register Modals */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => {
+          setShowLoginModal(false)
+          setPendingBooking(false)
+        }}
+        onSwitchToRegister={handleSwitchToRegister}
+        skipRedirect={true}
+      />
+      <RegisterModal 
+        isOpen={showRegisterModal} 
+        onClose={() => {
+          setShowRegisterModal(false)
+          setPendingBooking(false)
+        }}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
     </div>
   )
 }

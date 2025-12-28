@@ -178,12 +178,8 @@ const AdminDashboard = () => {
   const revenueLoading = isAdmin ? adminRevenueLoading : organizerRevenueLoading;
   const activities = (activitiesData as Activity[]) || [];
 
-  // Debug: Log revenue data
-  console.log('Revenue Data:', revenueData);
-  console.log('Revenue By Date:', revenueData?.revenueByDate);
-  console.log('Revenue By Category:', revenueData?.revenueByCategory);
 
-  // Fallback to mock data if API fails (for development)
+ 
   const displayStats = stats || {
     totalUsers: 0,
     totalEvents: 0,

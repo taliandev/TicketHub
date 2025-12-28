@@ -82,7 +82,7 @@ const Checkout = () => {
 
   const createReservationNow = async () => {
     if (!bookingData || !user) return;
-    const resp = await axiosInstance.post('/api/reservations', {
+    const resp = await axiosInstance.post('/reservations', {
       eventId: bookingData.eventId,
       type: bookingData.type,
       quantity: bookingData.quantity,
@@ -109,7 +109,7 @@ const Checkout = () => {
             try {
               const parsed = JSON.parse(stored) as { reservationId: string };
               if (parsed?.reservationId) {
-                const r = await axiosInstance.get(`/api/reservations/${parsed.reservationId}/ttl`);
+                const r = await axiosInstance.get(`/reservations/${parsed.reservationId}/ttl`);
                 if (typeof r.data.ttlSeconds === 'number' && r.data.ttlSeconds > 0) {
                   setReservationId(parsed.reservationId);
                   setTtl(r.data.ttlSeconds);
@@ -165,7 +165,7 @@ const Checkout = () => {
     if (!reservationId) return;
     const interval = setInterval(async () => {
       try {
-        const r = await axiosInstance.get(`/api/reservations/${reservationId}/ttl`);
+        const r = await axiosInstance.get(`/reservations/${reservationId}/ttl`);
         if (typeof r.data.ttlSeconds === 'number') setTtl(r.data.ttlSeconds);
       } catch {
         // ignore
@@ -177,7 +177,7 @@ const Checkout = () => {
   const handleCancelCheckout = async () => {
     try {
       if (reservationId) {
-        await axiosInstance.delete(`/api/reservations/${reservationId}`);
+        await axiosInstance.delete(`/reservations/${reservationId}`);
       }
     } catch {
       // ignore
@@ -233,7 +233,7 @@ const Checkout = () => {
       }
 
       
-      await axiosInstance.post('/api/tickets', {
+      await axiosInstance.post('/tickets', {
         eventId: bookingData.eventId,
         type: bookingData.type,
         price: bookingData.price * bookingData.quantity, 

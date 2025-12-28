@@ -3,9 +3,17 @@ import { Event } from '../models/Event.js';
 
 // Initialize Redis client (reuse env config)
 const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: Number(process.env.REDIS_PORT) || 6379,
+  host: process.env.REDIS_HOST || '',
+  port: Number(process.env.REDIS_PORT) ,
   password: process.env.REDIS_PASSWORD,
+});
+
+redis.on('error', (err) => {
+  console.error('Redis connection error:', err);
+});
+
+redis.on('connect', () => {
+  console.log('Redis connected successfully');
 });
 
 // Helper: build reservation key pattern and key
@@ -34,6 +42,8 @@ const sumActiveReservations = async (eventId, type) => {
 export const createReservation = async (req, res) => {
   try {
     const { eventId, type, quantity, userId, ttlSeconds = 900 } = req.body;
+    
+    console.log('createReservation called:', { eventId, type, quantity, userId });
 
     if (!eventId || !type || !quantity || !userId) {
       return res.status(400).json({ message: 'Thiếu tham số eventId, type, quantity, userId' });
@@ -44,13 +54,19 @@ export const createReservation = async (req, res) => {
 
     const event = await Event.findById(eventId).lean();
     if (!event) {
+      console.log('Event not found:', eventId);
       return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
     }
 
+    console.log('Event found:', { eventId, ticketTypes: event.ticketTypes?.map(t => t.name) });
+
     const ticketType = (event.ticketTypes || []).find(t => t.name === type);
     if (!ticketType) {
+      console.log('Ticket type not found:', { type, availableTypes: event.ticketTypes?.map(t => t.name) });
       return res.status(404).json({ message: 'Không tìm thấy loại vé' });
     }
+    
+    console.log('Ticket type found:', { type, available: ticketType.available });
 
     // Reuse existing reservation for this user/event/type if still valid
     const keys = await redis.keys(`res:${eventId}:${type}:*`);

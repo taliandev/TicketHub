@@ -8,12 +8,11 @@ import { sendTicketEmail } from '../services/emailService.js';
 import User from '../models/User.js';
 
 const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: Number(process.env.REDIS_PORT) || 6379,
+  host: process.env.REDIS_HOST || '',
+  port: Number(process.env.REDIS_PORT) ,
   password: process.env.REDIS_PASSWORD,
 });
 
-// Lưu trữ tạm thời các giao dịch (trong production nên dùng Redis)
 const transactions = new Map();
 
 const releaseReservationIfAny = async (reservationId) => {

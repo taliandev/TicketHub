@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import axiosInstance from '@/lib/axios';
 import PaymentGateway from '../components/PaymentGateway';
 import LoginModal from '../components/auth/LoginModal';
 import RegisterModal from '../components/auth/RegisterModal';
@@ -81,7 +82,7 @@ const Checkout = () => {
 
   const createReservationNow = async () => {
     if (!bookingData || !user) return;
-    const resp = await axios.post('/api/reservations', {
+    const resp = await axiosInstance.post('/api/reservations', {
       eventId: bookingData.eventId,
       type: bookingData.type,
       quantity: bookingData.quantity,
@@ -108,7 +109,7 @@ const Checkout = () => {
             try {
               const parsed = JSON.parse(stored) as { reservationId: string };
               if (parsed?.reservationId) {
-                const r = await axios.get(`/api/reservations/${parsed.reservationId}/ttl`);
+                const r = await axiosInstance.get(`/api/reservations/${parsed.reservationId}/ttl`);
                 if (typeof r.data.ttlSeconds === 'number' && r.data.ttlSeconds > 0) {
                   setReservationId(parsed.reservationId);
                   setTtl(r.data.ttlSeconds);
@@ -164,7 +165,7 @@ const Checkout = () => {
     if (!reservationId) return;
     const interval = setInterval(async () => {
       try {
-        const r = await axios.get(`/api/reservations/${reservationId}/ttl`);
+        const r = await axiosInstance.get(`/api/reservations/${reservationId}/ttl`);
         if (typeof r.data.ttlSeconds === 'number') setTtl(r.data.ttlSeconds);
       } catch {
         // ignore
@@ -176,7 +177,7 @@ const Checkout = () => {
   const handleCancelCheckout = async () => {
     try {
       if (reservationId) {
-        await axios.delete(`/api/reservations/${reservationId}`);
+        await axiosInstance.delete(`/api/reservations/${reservationId}`);
       }
     } catch {
       // ignore
@@ -232,7 +233,7 @@ const Checkout = () => {
       }
 
       
-      await axios.post('/api/tickets', {
+      await axiosInstance.post('/api/tickets', {
         eventId: bookingData.eventId,
         type: bookingData.type,
         price: bookingData.price * bookingData.quantity, 

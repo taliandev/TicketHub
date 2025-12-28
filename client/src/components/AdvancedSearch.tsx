@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '@/lib/axios';
 
 interface SearchFilters {
   query: string;
@@ -65,7 +65,7 @@ const AdvancedSearch = () => {
     }
 
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/search/suggestions?query=${query}`);
+      const response = await axiosInstance.get(`/api/search/suggestions?query=${query}`);
       setSuggestions(response.data.suggestions);
       setShowSuggestions(true);
     } catch (error) {

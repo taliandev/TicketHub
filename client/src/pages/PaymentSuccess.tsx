@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '@/lib/axios';
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const PaymentSuccess = () => {
           return;
         }
 
-        const response = await axios.get(`/api/payments/status/${transactionId}`);
+        const response = await axiosInstance.get(`/api/payments/status/${transactionId}`);
         
         if (response.data.status === 'paid') {
           setSuccess(true);

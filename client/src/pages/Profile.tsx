@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '@/lib/axios';
 import TicketModal from '../components/ui/TicketModal';
 import { useNavigate } from 'react-router-dom';
 import ChangePasswordSection from '@/components/profile/ChangePasswordSection';
@@ -43,7 +43,7 @@ const Profile = () => {
       if (!user) return;
       setLoading(true);
       try {
-        const res = await axios.get(`/api/tickets/user/${user.id}`);
+        const res = await axiosInstance.get(`/api/tickets/user/${user.id}`);
         setTickets(res.data);
       } catch (err) {
         console.error('Error fetching tickets:', err);

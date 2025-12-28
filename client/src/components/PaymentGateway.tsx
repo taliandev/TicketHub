@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '@/lib/axios';
 
 interface PaymentGatewayProps {
   amount: number;
@@ -60,7 +60,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
       switch (method) {
         case 'credit_card': {
           // Tạo thanh toán Credit Card
-          const creditCardResponse = await axios.post('/api/payments/credit-card', {
+          const creditCardResponse = await axiosInstance.post('/api/payments/credit-card', {
             amount,
             ticketId,
             returnUrl: `${window.location.origin}/payment-success`
@@ -72,7 +72,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
 
         case 'COD': {
           // Tạo thanh toán COD
-          const codResponse = await axios.post('/api/payments/cod', {
+          const codResponse = await axiosInstance.post('/api/payments/cod', {
             amount,
             ticketId,
             returnUrl: `${window.location.origin}/payment-success`
@@ -90,7 +90,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
         
         case 'qr_code': {
           // Tạo QR code thanh toán
-          const qrResponse = await axios.post('/api/payments/create-qr', {
+          const qrResponse = await axiosInstance.post('/api/payments/create-qr', {
             amount,
             ticketId,
             description: `Thanh toan ve su kien - ${ticketId}`,
@@ -103,7 +103,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
         
         case 'momo': {
           // Tạo thanh toán Momo
-          const momoResponse = await axios.post('/api/payments/momo', {
+          const momoResponse = await axiosInstance.post('/api/payments/momo', {
             amount,
             ticketId,
             returnUrl: `${window.location.origin}/payment-success`,
@@ -116,7 +116,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
         
         case 'vnpay': {
           // Tạo thanh toán VNPay
-          const vnpayResponse = await axios.post('/api/payments/vnpay', {
+          const vnpayResponse = await axiosInstance.post('/api/payments/vnpay', {
             amount,
             ticketId,
             returnUrl: `${window.location.origin}/payment-success`,
@@ -148,7 +148,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
     if (!transactionId) return;
     
     try {
-      const response = await axios.get(`/api/payments/status/${transactionId}`);
+      const response = await axiosInstance.get(`/api/payments/status/${transactionId}`);
       if (response.data.status === 'paid') {
         onSuccess();
       } else {

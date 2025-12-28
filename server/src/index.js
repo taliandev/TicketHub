@@ -19,7 +19,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:3000", "https://client-tickethub.vercel.app","https://client-tau-lake.vercel.app/"],
+  origin: ["http://localhost:3000", "https://client-tickethub.vercel.app","https://client-tau-lake.vercel.app"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));

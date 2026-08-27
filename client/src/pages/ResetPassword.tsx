@@ -46,7 +46,7 @@ const ResetPassword = () => {
       // Auto login after reset
       dispatch(loginSuccess({
         user: response.data.user,
-        token: response.data.token
+        accessToken: response.data.accessToken
       }));
 
       // Redirect based on role

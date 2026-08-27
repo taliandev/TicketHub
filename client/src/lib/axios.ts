@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { store } from '@/store'
 import { setAccessToken, clearAuth } from '@/store/slices/authSlice'
+import { toast } from './toast'
 
 // API Configuration
 const API_URL = import.meta.env.VITE_API_URL
@@ -58,6 +59,12 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    // Don't retry for login/register endpoints - let them show their own errors
+    if (originalRequest.url?.includes('/auth/login') || 
+        originalRequest.url?.includes('/auth/register')) {
+      return Promise.reject(error)
+    }
+
     // Handle 401 Unauthorized - try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
@@ -105,6 +112,9 @@ axiosInstance.interceptors.response.use(
         
         // Refresh failed - clear auth and redirect to login
         store.dispatch(clearAuth())
+        
+        // Show session expired toast
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại')
         
         // Only redirect if not already on login/register page
         if (!window.location.pathname.includes('/login') && 

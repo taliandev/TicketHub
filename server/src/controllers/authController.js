@@ -89,19 +89,32 @@ export const login = async (req, res) => {
   try {
     const { identifier, password } = req.body; // identifier can be email or username
 
+    if (!identifier || !password) {
+      return res.status(400).json({ 
+        message: 'Vui lòng nhập đầy đủ thông tin' 
+      });
+    }
+
     // Find user by email or username
     const user = await User.findOne({ 
       $or: [{ email: identifier }, { username: identifier }] 
     });
     
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        message: 'Email hoặc tên đăng nhập không tồn tại',
+        code: 'USER_NOT_FOUND'
+      });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
+    
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        message: 'Mật khẩu không chính xác',
+        code: 'INVALID_PASSWORD'
+      });
     }
 
     // Generate tokens
@@ -282,6 +295,13 @@ export const changePassword = async (req, res) => {
       });
     }
 
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ 
+        message: 'Mật khẩu mới phải khác mật khẩu hiện tại',
+        code: 'PASSWORD_UNCHANGED'
+      });
+    }
+
     // Find user
     const user = await User.findById(userId);
     
@@ -293,7 +313,10 @@ export const changePassword = async (req, res) => {
     const isMatch = await user.comparePassword(currentPassword);
     
     if (!isMatch) {
-      return res.status(401).json({ message: 'Mật khẩu hiện tại không đúng' });
+      return res.status(400).json({ 
+        message: 'Mật khẩu hiện tại không đúng',
+        code: 'INVALID_CURRENT_PASSWORD'
+      });
     }
 
     // Set new password

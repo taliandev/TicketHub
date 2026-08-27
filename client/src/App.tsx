@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { Toaster } from 'sonner'
 
 // Layouts
 import MainLayout from './components/layouts/MainLayout'
@@ -27,6 +28,13 @@ import ResetPassword from './pages/ResetPassword'
 function App() {
   return (
     <AuthProvider>
+      <Toaster 
+        position="top-right" 
+        expand={false}
+        richColors
+        closeButton
+        duration={3000}
+      />
       <ScrollToTop />
       <CartSidebar />
       <Routes>

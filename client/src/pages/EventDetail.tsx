@@ -12,6 +12,7 @@ import ErrorMessage from '@/components/ui/ErrorMessage'
 import LoginModal from '@/components/auth/LoginModal'
 import RegisterModal from '@/components/auth/RegisterModal'
 import { TicketType } from '@/hooks/useEvents'
+import { toast } from '@/lib/toast'
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>()
@@ -159,6 +160,9 @@ const EventDetail = () => {
       quantity,
       maxQuantity: selectedTicket.available - (selectedTicket.sold || 0),
     })
+
+    // Show success toast
+    toast.success(`Đã thêm ${quantity} vé vào giỏ hàng`)
 
     // Open cart sidebar
     openCart()

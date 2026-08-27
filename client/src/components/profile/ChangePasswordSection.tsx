@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axiosInstance from '@/lib/axios';
 import { AxiosError } from 'axios';
 import { Lock, Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface ApiError {
   message: string;
@@ -14,12 +15,10 @@ const ChangePasswordSection = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswords, setShowPasswords] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('');
     setError('');
 
     // Validation
@@ -33,6 +32,11 @@ const ChangePasswordSection = () => {
       return;
     }
 
+    if (currentPassword === newPassword) {
+      setError('Mật khẩu mới phải khác mật khẩu hiện tại');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -41,16 +45,20 @@ const ChangePasswordSection = () => {
         newPassword
       });
 
-      setMessage('Đổi mật khẩu thành công!');
+      toast.success('Đổi mật khẩu thành công!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      
-      // Clear message after 3 seconds
-      setTimeout(() => setMessage(''), 3000);
+      setError('');
     } catch (err) {
       const error = err as AxiosError<ApiError>;
-      setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại');
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại';
+      
+      if (error.response?.status === 400) {
+        setError(errorMessage);
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -67,16 +75,6 @@ const ChangePasswordSection = () => {
           <p className="text-sm text-gray-400">Cập nhật mật khẩu của bạn</p>
         </div>
       </div>
-
-      {/* Success Message */}
-      {message && (
-        <div className="mb-4 p-4 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Check className="w-5 h-5" />
-            <span className="font-medium">{message}</span>
-          </div>
-        </div>
-      )}
 
       {/* Error Message */}
       {error && (

@@ -24,32 +24,32 @@ export const handleApiError = (error: unknown): ApiError => {
         }
       case 401:
         return {
-          message: 'Vui lòng đăng nhập để tiếp tục',
+          message: message || 'Vui lòng đăng nhập để tiếp tục',
           status,
           code,
         }
       case 403:
         return {
-          message: 'Bạn không có quyền truy cập',
+          message: message || 'Bạn không có quyền truy cập',
           status,
           code,
         }
       case 404:
         return {
-          message: 'Không tìm thấy dữ liệu',
+          message: message || 'Không tìm thấy dữ liệu',
           status,
           code,
         }
       case 422:
         return {
-          message: 'Dữ liệu không hợp lệ',
+          message: message || 'Dữ liệu không hợp lệ',
           status,
           code,
           details: error.response?.data?.details,
         }
       case 500:
         return {
-          message: 'Lỗi máy chủ, vui lòng thử lại sau',
+          message: message || 'Lỗi máy chủ, vui lòng thử lại sau',
           status,
           code,
         }

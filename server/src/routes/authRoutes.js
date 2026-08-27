@@ -4,7 +4,9 @@ import {
   login, 
   forgotPassword, 
   resetPassword, 
-  changePassword 
+  changePassword,
+  refreshAccessToken,
+  logout
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -15,6 +17,12 @@ router.post('/register', register);
 
 // Login route
 router.post('/login', login);
+
+// Refresh access token
+router.post('/refresh', refreshAccessToken);
+
+// Logout
+router.post('/logout', logout);
 
 // Forgot password - Send reset email
 router.post('/forgot-password', forgotPassword);

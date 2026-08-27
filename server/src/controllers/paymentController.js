@@ -8,10 +8,16 @@ import { sendTicketEmail } from '../services/emailService.js';
 import User from '../models/User.js';
 
 const redis = new Redis({
-  host: process.env.REDIS_HOST || '',
-  port: Number(process.env.REDIS_PORT) ,
+  host: process.env.REDIS_HOST || 'localhost',
+  port: Number(process.env.REDIS_PORT) || 6379,
   password: process.env.REDIS_PASSWORD,
+  lazyConnect: true,
+  enableOfflineQueue: false,
+  maxRetriesPerRequest: 1,
 });
+
+redis.on('error', () => {});
+redis.connect().catch(() => {});
 
 const transactions = new Map();
 
@@ -355,7 +361,6 @@ export const handlePaymentWebhook = async (req, res) => {
             quantity: ticket.quantity_total,
             totalPrice: ticket.price
           });
-          console.log('Ticket email sent to:', user.email);
         }
       } catch (emailError) {
         console.error('Error sending ticket email:', emailError);

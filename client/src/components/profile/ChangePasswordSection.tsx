@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axiosInstance from '@/lib/axios';
 import { AxiosError } from 'axios';
+import { Lock, Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
 
 interface ApiError {
   message: string;
@@ -35,7 +36,7 @@ const ChangePasswordSection = () => {
     setIsLoading(true);
 
     try {
-      await axiosInstance.post('/api/auth/change-password', {
+      await axiosInstance.post('/auth/change-password', {
         currentPassword,
         newPassword
       });
@@ -56,26 +57,22 @@ const ChangePasswordSection = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div>
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-blue-100 rounded-lg">
-          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
+        <div className="p-2 bg-purple-500/20 rounded-lg border border-purple-500/30">
+          <Lock className="w-6 h-6 text-purple-400" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Đổi mật khẩu</h2>
-          <p className="text-sm text-gray-600">Cập nhật mật khẩu của bạn</p>
+          <h2 className="text-xl font-bold text-white">Đổi mật khẩu</h2>
+          <p className="text-sm text-gray-400">Cập nhật mật khẩu của bạn</p>
         </div>
       </div>
 
       {/* Success Message */}
       {message && (
-        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+        <div className="mb-4 p-4 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg">
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
+            <Check className="w-5 h-5" />
             <span className="font-medium">{message}</span>
           </div>
         </div>
@@ -83,11 +80,9 @@ const ChangePasswordSection = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+        <div className="mb-4 p-4 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg">
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
+            <AlertCircle className="w-5 h-5" />
             <span className="font-medium">{error}</span>
           </div>
         </div>
@@ -96,7 +91,7 @@ const ChangePasswordSection = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Current Password */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
             Mật khẩu hiện tại
           </label>
           <div className="relative">
@@ -106,7 +101,7 @@ const ChangePasswordSection = () => {
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
               placeholder="Nhập mật khẩu hiện tại"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-500"
               disabled={isLoading}
             />
           </div>
@@ -114,7 +109,7 @@ const ChangePasswordSection = () => {
 
         {/* New Password */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
             Mật khẩu mới
           </label>
           <input
@@ -124,14 +119,14 @@ const ChangePasswordSection = () => {
             required
             minLength={6}
             placeholder="Ít nhất 6 ký tự"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-500"
             disabled={isLoading}
           />
         </div>
 
         {/* Confirm Password */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
             Xác nhận mật khẩu mới
           </label>
           <input
@@ -140,39 +135,37 @@ const ChangePasswordSection = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             placeholder="Nhập lại mật khẩu mới"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-500"
             disabled={isLoading}
           />
         </div>
 
         {/* Show Password Toggle */}
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="showPasswords"
-            checked={showPasswords}
-            onChange={(e) => setShowPasswords(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-          <label htmlFor="showPasswords" className="ml-2 text-sm text-gray-700">
-            Hiển thị mật khẩu
-          </label>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPasswords(!showPasswords)}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {showPasswords ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
+          </button>
         </div>
 
         {/* Password Requirements */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm font-medium text-blue-900 mb-2">Yêu cầu mật khẩu:</p>
-          <ul className="text-sm text-blue-800 space-y-1">
+        <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+          <p className="text-sm font-medium text-purple-300 mb-3">Yêu cầu mật khẩu:</p>
+          <ul className="text-sm text-gray-300 space-y-2">
             <li className="flex items-center gap-2">
-              <svg className={`w-4 h-4 ${newPassword.length >= 6 ? 'text-green-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${newPassword.length >= 6 ? 'bg-green-500/20 border border-green-500/30' : 'bg-gray-700/50 border border-gray-600'}`}>
+                {newPassword.length >= 6 && <Check className="w-3 h-3 text-green-400" />}
+              </div>
               Ít nhất 6 ký tự
             </li>
             <li className="flex items-center gap-2">
-              <svg className={`w-4 h-4 ${newPassword && confirmPassword && newPassword === confirmPassword ? 'text-green-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${newPassword && confirmPassword && newPassword === confirmPassword ? 'bg-green-500/20 border border-green-500/30' : 'bg-gray-700/50 border border-gray-600'}`}>
+                {newPassword && confirmPassword && newPassword === confirmPassword && <Check className="w-3 h-3 text-green-400" />}
+              </div>
               Mật khẩu khớp nhau
             </li>
           </ul>
@@ -182,7 +175,7 @@ const ChangePasswordSection = () => {
         <button
           type="submit"
           disabled={isLoading || !currentPassword || !newPassword || !confirmPassword}
-          className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/50 disabled:shadow-none"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">

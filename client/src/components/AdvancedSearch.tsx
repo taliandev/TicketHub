@@ -65,7 +65,7 @@ const AdvancedSearch = () => {
     }
 
     try {
-      const response = await axiosInstance.get(`/api/search/suggestions?query=${query}`);
+      const response = await axiosInstance.get(`/search/suggestions?query=${query}`);
       setSuggestions(response.data.suggestions);
       setShowSuggestions(true);
     } catch (error) {

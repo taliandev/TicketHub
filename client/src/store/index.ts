@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice'
 import eventReducer from './slices/eventSlice'
 import ticketReducer from './slices/ticketSlice'
 import bookingReducer from './slices/bookingSlice'
+import cartReducer from './slices/cartSlice'
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     event: eventReducer,
     ticket: ticketReducer,
     booking: bookingReducer,
+    cart: cartReducer,
   },
 })
 

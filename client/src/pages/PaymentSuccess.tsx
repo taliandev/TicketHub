@@ -22,7 +22,7 @@ const PaymentSuccess = () => {
           return;
         }
 
-        const response = await axiosInstance.get(`/api/payments/status/${transactionId}`);
+        const response = await axiosInstance.get(`/payments/status/${transactionId}`);
         
         if (response.data.status === 'paid') {
           setSuccess(true);

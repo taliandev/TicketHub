@@ -76,7 +76,7 @@
 }
 
 @layer utilities {
-  /* Custom animations */
+  /* Custom animations - Enhanced */
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -119,61 +119,159 @@
     }
   }
 
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(168, 85, 247, 0.6);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
   .animate-fadeIn {
-    animation: fadeIn 0.2s ease-out;
+    animation: fadeIn 0.3s ease-out;
   }
 
   .animate-slideUp {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.4s ease-out;
   }
 
   .animate-slideDown {
-    animation: slideDown 0.3s ease-out;
+    animation: slideDown 0.4s ease-out;
   }
 
   .animate-scaleIn {
-    animation: scaleIn 0.2s ease-out;
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  .animate-gradient-shift {
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #a855f7 0%, #ec4899 100%);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #9333ea 0%, #db2777 100%);
+  }
+
+  /* Utility classes for background gradient animation */
+  .bg-size-200 {
+    background-size: 200% 100%;
+  }
+
+  .bg-pos-0 {
+    background-position: 0% 0%;
+  }
+
+  .bg-pos-100 {
+    background-position: 100% 0%;
   }
 }
 
-/* Slick Carousel Custom Styles */
+/* Slick Carousel Custom Styles - Enhanced */
 .banner-slider .slick-prev,
 .banner-slider .slick-next {
   z-index: 10;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
+  transition: all 0.3s ease;
+}
+
+.banner-slider .slick-prev:hover,
+.banner-slider .slick-next:hover {
+  transform: scale(1.1);
 }
 
 .banner-slider .slick-prev {
-  left: 20px;
+  left: 30px;
 }
 
 .banner-slider .slick-next {
-  right: 20px;
+  right: 30px;
 }
 
 .banner-slider .slick-prev:before,
 .banner-slider .slick-next:before {
-  font-size: 40px;
-  opacity: 0.75;
+  font-size: 50px;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
 }
 
 .banner-slider .slick-prev:hover:before,
 .banner-slider .slick-next:hover:before {
   opacity: 1;
+  text-shadow: 0 0 30px rgba(168, 85, 247, 0.8);
 }
 
 .banner-slider .slick-dots {
-  bottom: 20px;
+  bottom: 30px;
+}
+
+.banner-slider .slick-dots li {
+  margin: 0 5px;
 }
 
 .banner-slider .slick-dots li button:before {
-  font-size: 12px;
+  font-size: 14px;
   color: white;
-  opacity: 0.5;
+  opacity: 0.4;
+  transition: all 0.3s ease;
 }
 
 .banner-slider .slick-dots li.slick-active button:before {
   opacity: 1;
-  color: white;
+  color: #a855f7;
+  transform: scale(1.3);
+}
+
+.banner-slider .slick-dots li button:hover:before {
+  opacity: 0.8;
 } 

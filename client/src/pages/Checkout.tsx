@@ -233,7 +233,7 @@ const Checkout = () => {
       }
 
       
-      await axiosInstance.post('api/tickets', {
+      await axiosInstance.post('/tickets', {
         eventId: bookingData.eventId,
         type: bookingData.type,
         price: bookingData.price * bookingData.quantity, 

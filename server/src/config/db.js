@@ -5,10 +5,15 @@ dotenv.config();
 
 export const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || '');
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/tickethub';
+    
+    const conn = await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    
   } catch (error) {
-    console.error('Error connecting to MongoDB:', error);
+    console.error('❌ Error connecting to MongoDB:', error.message);
     process.exit(1);
   }
 };
@@ -16,7 +21,6 @@ export const connectDB = async () => {
 export const disconnectDB = async () => {
   try {
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB successfully');
   } catch (error) {
     console.error('MongoDB disconnection error:', error);
   }

@@ -1,19 +1,28 @@
 import Redis from 'ioredis';
 import { Event } from '../models/Event.js';
 
-// Initialize Redis client (reuse env config)
+// Initialize Redis client (reuse env config) with error handling
 const redis = new Redis({
-  host: process.env.REDIS_HOST || '',
-  port: Number(process.env.REDIS_PORT) ,
+  host: process.env.REDIS_HOST || 'localhost',
+  port: Number(process.env.REDIS_PORT) || 6379,
   password: process.env.REDIS_PASSWORD,
+  lazyConnect: true,
+  enableOfflineQueue: false,
+  maxRetriesPerRequest: 1,
 });
 
-redis.on('error', (err) => {
-  console.error('Redis connection error:', err);
+let isRedisConnected = false;
+
+redis.on('error', () => {
+  isRedisConnected = false;
 });
 
 redis.on('connect', () => {
-  console.log('Redis connected successfully');
+  isRedisConnected = true;
+});
+
+redis.connect().catch(() => {
+  // Redis connection failed - will use fallback logic
 });
 
 // Helper: build reservation key pattern and key
@@ -21,29 +30,34 @@ const buildReservationKey = (eventId, type, reservationId) => `res:${eventId}:${
 
 // Helper: list active reservations and sum quantities (dev-friendly KEYS; optimize later)
 const sumActiveReservations = async (eventId, type) => {
-  const pattern = `res:${eventId}:${type}:*`;
-  const keys = await redis.keys(pattern);
-  if (!keys || keys.length === 0) return 0;
-  const values = await redis.mget(keys);
-  let total = 0;
-  for (const val of values) {
-    if (!val) continue;
-    try {
-      const parsed = JSON.parse(val);
-      total += Number(parsed.quantity || 0);
-    } catch (_) {
-      // ignore parse error
+  if (!isRedisConnected) return 0; // Skip if Redis not connected
+  
+  try {
+    const pattern = `res:${eventId}:${type}:*`;
+    const keys = await redis.keys(pattern);
+    if (!keys || keys.length === 0) return 0;
+    const values = await redis.mget(keys);
+    let total = 0;
+    for (const val of values) {
+      if (!val) continue;
+      try {
+        const parsed = JSON.parse(val);
+        total += Number(parsed.quantity || 0);
+      } catch (_) {
+        // ignore parse error
+      }
     }
+    return total;
+  } catch (error) {
+    console.warn('Redis operation failed, returning 0:', error.message);
+    return 0;
   }
-  return total;
 };
 
 // POST /api/reservations
 export const createReservation = async (req, res) => {
   try {
     const { eventId, type, quantity, userId, ttlSeconds = 900 } = req.body;
-    
-    console.log('createReservation called:', { eventId, type, quantity, userId });
 
     if (!eventId || !type || !quantity || !userId) {
       return res.status(400).json({ message: 'Thiếu tham số eventId, type, quantity, userId' });
@@ -54,36 +68,36 @@ export const createReservation = async (req, res) => {
 
     const event = await Event.findById(eventId).lean();
     if (!event) {
-      console.log('Event not found:', eventId);
       return res.status(404).json({ message: 'Không tìm thấy sự kiện' });
     }
 
-    console.log('Event found:', { eventId, ticketTypes: event.ticketTypes?.map(t => t.name) });
-
     const ticketType = (event.ticketTypes || []).find(t => t.name === type);
     if (!ticketType) {
-      console.log('Ticket type not found:', { type, availableTypes: event.ticketTypes?.map(t => t.name) });
       return res.status(404).json({ message: 'Không tìm thấy loại vé' });
     }
-    
-    console.log('Ticket type found:', { type, available: ticketType.available });
 
     // Reuse existing reservation for this user/event/type if still valid
-    const keys = await redis.keys(`res:${eventId}:${type}:*`);
-    if (keys && keys.length > 0) {
-      const values = await redis.mget(keys);
-      for (let i = 0; i < keys.length; i++) {
-        const val = values[i];
-        if (!val) continue;
-        try {
-          const parsed = JSON.parse(val);
-          if (parsed.userId === userId) {
-            const ttl = await redis.ttl(keys[i]);
-            if (ttl > 0) {
-              return res.status(200).json({ reservationId: parsed.reservationId, ttlSeconds: ttl, expiresAt: new Date(Date.now() + ttl * 1000).toISOString() });
-            }
+    if (isRedisConnected) {
+      try {
+        const keys = await redis.keys(`res:${eventId}:${type}:*`);
+        if (keys && keys.length > 0) {
+          const values = await redis.mget(keys);
+          for (let i = 0; i < keys.length; i++) {
+            const val = values[i];
+            if (!val) continue;
+            try {
+              const parsed = JSON.parse(val);
+              if (parsed.userId === userId) {
+                const ttl = await redis.ttl(keys[i]);
+                if (ttl > 0) {
+                  return res.status(200).json({ reservationId: parsed.reservationId, ttlSeconds: ttl, expiresAt: new Date(Date.now() + ttl * 1000).toISOString() });
+                }
+              }
+            } catch (_) {}
           }
-        } catch (_) {}
+        }
+      } catch (error) {
+        console.warn('Redis check existing reservation failed:', error.message);
       }
     }
 
@@ -105,8 +119,15 @@ export const createReservation = async (req, res) => {
       expiresAt,
     };
 
-    const key = buildReservationKey(eventId, type, reservationId);
-    await redis.set(key, JSON.stringify(reservation), 'EX', ttlSeconds);
+    // Save to Redis if connected
+    if (isRedisConnected) {
+      try {
+        const key = buildReservationKey(eventId, type, reservationId);
+        await redis.set(key, JSON.stringify(reservation), 'EX', ttlSeconds);
+      } catch (error) {
+        console.warn('Redis save reservation failed:', error.message);
+      }
+    }
 
     return res.status(201).json({ reservationId, expiresAt, ttlSeconds });
   } catch (error) {
@@ -118,8 +139,16 @@ export const createReservation = async (req, res) => {
 // GET /api/reservations/:reservationId/ttl
 export const getReservationTTL = async (req, res) => {
   try {
+    if (!isRedisConnected) {
+      // Without Redis, assume reservation is valid for default time
+      return res.json({ 
+        reservationId: req.params.reservationId, 
+        ttlSeconds: 900, // Default 15 minutes
+        note: 'Redis unavailable, using default TTL'
+      });
+    }
+    
     const { reservationId } = req.params;
-    // Find the key by pattern (since we encoded eventId/type in key)
     const keys = await redis.keys(`res:*:*:${reservationId}`);
     if (!keys || keys.length === 0) {
       return res.status(404).json({ message: 'Không tìm thấy giữ chỗ' });
@@ -136,6 +165,10 @@ export const getReservationTTL = async (req, res) => {
 // DELETE /api/reservations/:reservationId (cancel early)
 export const cancelReservation = async (req, res) => {
   try {
+    if (!isRedisConnected) {
+      return res.json({ success: true, note: 'Redis unavailable, reservation auto-expires' });
+    }
+    
     const { reservationId } = req.params;
     const keys = await redis.keys(`res:*:*:${reservationId}`);
     if (!keys || keys.length === 0) {

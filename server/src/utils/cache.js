@@ -5,8 +5,28 @@ const redis = new Redis({
   port: process.env.REDIS_PORT || 6379,
   password: process.env.REDIS_PASSWORD,
   retryDelayOnFailover: 100,
-  maxRetriesPerRequest: 3,
+  maxRetriesPerRequest: 1,
+  enableOfflineQueue: false,
+  lazyConnect: true,
 });
+
+let isRedisConnected = false;
+
+redis.on('connect', () => {
+  isRedisConnected = true;
+});
+
+redis.on('error', (err) => {
+  console.warn('⚠️  Redis unavailable (running without cache)');
+  isRedisConnected = false;
+});
+
+// Try connect but don't crash
+redis.connect().catch(() => {
+  console.warn('⚠️  Starting without Redis cache');
+});
+
+export const isRedisAvailable = () => isRedisConnected;
 
 // Cache configuration
 const CACHE_TTL = {

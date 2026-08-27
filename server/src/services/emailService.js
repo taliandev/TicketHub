@@ -260,10 +260,8 @@ export const sendTicketEmail = async (ticketData) => {
       html: emailHTML
     });
 
-    console.log('Email sent successfully:', info.messageId);
-    
-    // For Ethereal, log preview URL
-    if (process.env.SMTP_HOST === 'smtp.ethereal.email' || !process.env.EMAIL_SERVICE) {
+    // For Ethereal, log preview URL in development
+    if (process.env.NODE_ENV === 'development' && process.env.SMTP_HOST === 'smtp.ethereal.email') {
       console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
     }
 
@@ -335,8 +333,6 @@ export const sendOrderConfirmationEmail = async (orderData) => {
       subject: `Order Confirmation - ${orderId}`,
       html: emailHTML
     });
-
-    console.log('Order confirmation email sent:', info.messageId);
 
     return {
       success: true,
@@ -484,11 +480,9 @@ export const sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
       subject: 'Reset Your Password - TicketHub',
       html: emailHTML
     });
-
-    console.log('Password reset email sent:', info.messageId);
     
-    // For Ethereal, log preview URL
-    if (process.env.SMTP_HOST === 'smtp.ethereal.email' || !process.env.EMAIL_SERVICE) {
+    // For Ethereal, log preview URL in development
+    if (process.env.NODE_ENV === 'development' && process.env.SMTP_HOST === 'smtp.ethereal.email') {
       console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
     }
 

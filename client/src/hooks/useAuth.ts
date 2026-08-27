@@ -1,9 +1,10 @@
 import { useSelector, useDispatch } from 'react-redux'
 import { useCallback } from 'react'
 import { RootState } from '@/store'
-import { loginStart, loginSuccess, loginFailure, logout as logoutAction, updateUser } from '@/store/slices/authSlice'
+import { loginStart, loginSuccess, loginFailure, logout as logoutAction, updateUser, setAccessToken, clearAuth } from '@/store/slices/authSlice'
 import api, { API_ENDPOINTS } from '@/lib/api'
 import { handleApiError } from '@/lib/errorHandler'
+import axiosInstance from '@/lib/axios'
 
 interface User {
   id: string
@@ -15,7 +16,7 @@ interface User {
 
 interface AuthResponse {
   user: User
-  token: string
+  accessToken: string // Changed from 'token' to 'accessToken'
 }
 
 interface LoginCredentials {
@@ -35,7 +36,7 @@ interface RegisterData {
 
 export const useAuth = () => {
   const dispatch = useDispatch()
-  const { user, token, isAuthenticated, loading, error } = useSelector(
+  const { user, accessToken, isAuthenticated, loading, error } = useSelector(
     (state: RootState) => state.auth
   )
 
@@ -71,8 +72,16 @@ export const useAuth = () => {
     [dispatch]
   )
 
-  const logout = useCallback(() => {
-    dispatch(logoutAction())
+  const logout = useCallback(async () => {
+    try {
+      // Call logout endpoint to clear refresh token cookie
+      await axiosInstance.post('/auth/logout')
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Clear auth state regardless of API call result
+      dispatch(logoutAction())
+    }
   }, [dispatch])
 
   const updateProfile = useCallback(
@@ -82,9 +91,26 @@ export const useAuth = () => {
     [dispatch]
   )
 
+  // Try to restore session using refresh token
+  const restoreSession = useCallback(async () => {
+    try {
+      const response = await axiosInstance.post<AuthResponse>('/auth/refresh')
+      const { accessToken, user } = response.data
+      
+      dispatch(setAccessToken(accessToken))
+      dispatch(updateUser(user))
+      
+      return { success: true }
+    } catch (error) {
+      // Refresh token expired or invalid
+      dispatch(clearAuth())
+      return { success: false }
+    }
+  }, [dispatch])
+
   return {
     user,
-    token,
+    accessToken, // Changed from 'token'
     isAuthenticated,
     loading,
     error,
@@ -92,5 +118,6 @@ export const useAuth = () => {
     register,
     logout,
     updateProfile,
+    restoreSession,
   }
 }

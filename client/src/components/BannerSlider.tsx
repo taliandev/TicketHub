@@ -46,7 +46,8 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
                 <img
                   src={event.img}
                   alt={event.title}
-                  className="w-full h-full object-cover scale-105 transition-transform duration-[10000ms] ease-out hover:scale-110"
+                  className="w-full h-full object-cover scale-105 transition-transform ease-out hover:scale-110"
+                  style={{ transitionDuration: '10000ms' }}
                 />
                 {/* Gradient Overlays */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />

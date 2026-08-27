@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
@@ -26,9 +27,10 @@ app.use(cors({
     /\.vercel\.app$/ // Allow all Vercel preview deployments
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
+  credentials: true // Important: Allow cookies
 }));
 app.use(express.json());
+app.use(cookieParser()); // Parse cookies
 app.use(morgan('dev'));
 
 // Routes

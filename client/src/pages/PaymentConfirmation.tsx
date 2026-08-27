@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import { axiosInstance } from '@/lib/axios';
 
 interface PaymentConfirmationProps {
   ticketId: string;
@@ -39,7 +40,7 @@ const PaymentConfirmation = () => {
     }
 
     try {
-      await axios.patch(`/api/tickets/${ticketId}`, {
+      await axiosInstance.patch(`/tickets/${ticketId}`, {
         status: 'paid',
         paymentMethod: paymentMethod
       });

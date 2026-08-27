@@ -3,6 +3,32 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import { sendPasswordResetEmail } from '../services/emailService.js';
 
+// Token generation helpers
+const generateAccessToken = (userId) => {
+  return jwt.sign(
+    { id: userId },
+    process.env.JWT_SECRET || 'your_jwt_secret',
+    { expiresIn: '15m' } // Short-lived access token
+  );
+};
+
+const generateRefreshToken = (userId) => {
+  return jwt.sign(
+    { id: userId },
+    process.env.JWT_REFRESH_SECRET || 'your_jwt_refresh_secret',
+    { expiresIn: '7d' } // Long-lived refresh token
+  );
+};
+
+const setRefreshTokenCookie = (res, refreshToken) => {
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true, // Không thể truy cập từ JavaScript
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    sameSite: 'strict', // CSRF protection
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+};
+
 // Register new user
 export const register = async (req, res) => {
   try {
@@ -29,16 +55,21 @@ export const register = async (req, res) => {
 
     await user.save();
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET || 'your_jwt_secret',
-      { expiresIn: '24h' }
-    );
+    // Generate tokens
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Save refresh token to database
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await user.save();
+
+    // Set refresh token in HTTP-only cookie
+    setRefreshTokenCookie(res, refreshToken);
 
     res.status(201).json({
       message: 'User registered successfully',
-      token,
+      accessToken, // Send access token in response body
       user: {
         id: user._id,
         username: user.username,
@@ -73,16 +104,22 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET || 'your_jwt_secret',
-      { expiresIn: '24h' }
-    );
+    // Generate tokens
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Save refresh token to database
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    // Set refresh token in HTTP-only cookie
+    setRefreshTokenCookie(res, refreshToken);
 
     res.json({
       message: 'Login successful',
-      token,
+      accessToken, // Send access token in response body
       user: {
         id: user._id,
         username: user.username,
@@ -198,16 +235,21 @@ export const resetPassword = async (req, res) => {
     
     await user.save();
 
-    // Generate new JWT token
-    const jwtToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET || 'your_jwt_secret',
-      { expiresIn: '24h' }
-    );
+    // Generate tokens
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Save refresh token to database
+    user.refreshToken = refreshToken;
+    user.refreshTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await user.save();
+
+    // Set refresh token in HTTP-only cookie
+    setRefreshTokenCookie(res, refreshToken);
 
     res.json({
       message: 'Mật khẩu đã được đặt lại thành công',
-      token: jwtToken,
+      accessToken, // Changed from 'token' to 'accessToken'
       user: {
         id: user._id,
         username: user.username,
@@ -261,6 +303,84 @@ export const changePassword = async (req, res) => {
     res.json({ message: 'Đổi mật khẩu thành công' });
   } catch (error) {
     console.error('Change password error:', error);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+// Refresh access token using refresh token from cookie
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'Refresh token not found' });
+    }
+
+    // Verify refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'your_jwt_refresh_secret');
+    } catch (err) {
+      return res.status(401).json({ message: 'Invalid or expired refresh token' });
+    }
+
+    // Find user and verify refresh token matches
+    const user = await User.findById(decoded.id);
+    
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+
+    // Check if refresh token is expired
+    if (user.refreshTokenExpires && user.refreshTokenExpires < new Date()) {
+      return res.status(401).json({ message: 'Refresh token expired' });
+    }
+
+    // Generate new access token
+    const accessToken = generateAccessToken(user._id);
+
+    res.json({
+      accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+// Logout - clear refresh token
+export const logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+
+    if (refreshToken) {
+      // Remove refresh token from database
+      const decoded = jwt.decode(refreshToken);
+      if (decoded?.id) {
+        await User.findByIdAndUpdate(decoded.id, {
+          refreshToken: null,
+          refreshTokenExpires: null,
+        });
+      }
+    }
+
+    // Clear cookie
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({ message: 'Lỗi server' });
   }
 };

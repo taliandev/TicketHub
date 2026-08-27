@@ -4,6 +4,8 @@ import { Routes, Route } from 'react-router-dom'
 import MainLayout from './components/layouts/MainLayout'
 import ScrollToTop from './components/ScrollToTop'
 import ProtectedRoute from './components/ProtectedRoute'
+import CartSidebar from './components/cart/CartSidebar'
+import { AuthProvider } from './components/AuthProvider'
 
 // Pages
 import Home from './pages/Home'
@@ -14,6 +16,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import NotFound from './pages/NotFound'
 import EventDetail from './pages/EventDetail'
 import Profile from './pages/Profile'
+import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import PaymentConfirmation from './pages/PaymentConfirmation'
 import PaymentSuccess from './pages/PaymentSuccess'
@@ -23,13 +26,15 @@ import ResetPassword from './pages/ResetPassword'
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <ScrollToTop />
+      <CartSidebar />
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/events" element={<Events />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/cart" element={<Cart />} />
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
@@ -59,7 +64,7 @@ function App() {
           } 
         />
       </Routes>
-    </>
+    </AuthProvider>
   )
 }
 

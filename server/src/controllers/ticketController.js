@@ -88,7 +88,8 @@ export const createTicket = async (req, res) => {
       t.sold = Number(t.sold) || 0;
     });
     
-    await event.save();
+    // Save with validation bypass to avoid issues with legacy events missing required fields
+    await event.save({ validateBeforeSave: false });
 
     const ticketCode = generateTicketCode();
     const qrCode = generateQRCode();
@@ -134,16 +135,6 @@ export const createTicket = async (req, res) => {
       });
     }
     */
-
-    // Log thông tin vé thay vì gửi email
-    console.log('Ticket created successfully:', {
-      ticketId: ticket._id,
-      eventTitle: event.title,
-      ticketCode,
-      qrCode,
-      userEmail: email,
-      userName: fullName
-    });
 
     res.status(201).json(ticket);
   } catch (err) {

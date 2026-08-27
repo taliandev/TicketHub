@@ -48,27 +48,22 @@ axiosInstance.interceptors.request.use(
   }
 )
 
-// Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest: any = error.config
 
-    // Don't retry if this is the refresh endpoint itself (prevent infinite loop)
     if (originalRequest.url?.includes('/auth/refresh')) {
       return Promise.reject(error)
     }
 
-    // Don't retry for login/register endpoints - let them show their own errors
     if (originalRequest.url?.includes('/auth/login') || 
         originalRequest.url?.includes('/auth/register')) {
       return Promise.reject(error)
     }
 
-    // Handle 401 Unauthorized - try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Queue requests while refreshing
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         }).then(token => {
@@ -85,7 +80,6 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true
 
       try {
-        // Try to refresh access token using refresh token in cookie
         const response = await axios.post(
           `${API_URL}/api/auth/refresh`,
           {},
@@ -94,10 +88,8 @@ axiosInstance.interceptors.response.use(
 
         const { accessToken } = response.data
         
-        // Update access token in Redux store
         store.dispatch(setAccessToken(accessToken))
         
-        // Update authorization header
         if (originalRequest.headers) {
           originalRequest.headers['Authorization'] = 'Bearer ' + accessToken
         }
@@ -110,24 +102,23 @@ axiosInstance.interceptors.response.use(
         processQueue(refreshError, null)
         isRefreshing = false
         
-        // Refresh failed - clear auth and redirect to login
         store.dispatch(clearAuth())
         
-        // Show session expired toast
-        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại')
-        
-        // Only redirect if not already on login/register page
-        if (!window.location.pathname.includes('/login') && 
-            !window.location.pathname.includes('/register')) {
-          window.location.href = '/'
+        const wasAuthenticated = store.getState().auth.isAuthenticated
+        if (wasAuthenticated) {
+          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại')
+          
+          if (!window.location.pathname.includes('/login') && 
+              !window.location.pathname.includes('/register')) {
+            window.location.href = '/'
+          }
         }
         
         return Promise.reject(refreshError)
       }
     }
     
-    // Handle network errors
-    if (!error.response) {
+    if (!error.response && !originalRequest.url?.includes('/auth/refresh')) {
       console.error('Network error:', error.message)
     }
     
@@ -135,5 +126,4 @@ axiosInstance.interceptors.response.use(
   }
 )
 
-// Export as default and named
 export default axiosInstance 

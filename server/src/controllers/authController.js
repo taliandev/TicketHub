@@ -21,10 +21,12 @@ const generateRefreshToken = (userId) => {
 };
 
 const setRefreshTokenCookie = (res, refreshToken) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true, // Không thể truy cập từ JavaScript
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: 'strict', // CSRF protection
+    secure: isProduction, // HTTPS only in production
+    sameSite: isProduction ? 'none' : 'strict', // 'none' for cross-origin in production
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
@@ -394,11 +396,13 @@ export const logout = async (req, res) => {
       }
     }
 
-    // Clear cookie
+    // Clear cookie with same settings as when it was set
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'strict',
     });
 
     res.json({ message: 'Logged out successfully' });

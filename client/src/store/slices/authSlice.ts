@@ -10,17 +10,16 @@ interface User {
 
 interface AuthState {
   user: User | null
-  accessToken: string | null // Lưu trong memory, không lưu localStorage
+  accessToken: string | null // Lưu trong memory
   isAuthenticated: boolean
   loading: boolean
   error: string | null
 }
 
-// Only restore user from localStorage, NOT token
 const initialState: AuthState = {
   user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
-  accessToken: null, // Token sẽ được lấy từ refresh token khi app khởi động
-  isAuthenticated: false, // Sẽ được set true sau khi refresh token thành công
+  accessToken: null, 
+  isAuthenticated: false, 
   loading: false,
   error: null,
 }
@@ -39,7 +38,6 @@ const authSlice = createSlice({
       state.user = action.payload.user
       state.accessToken = action.payload.accessToken // Chỉ lưu trong memory
       localStorage.setItem('user', JSON.stringify(action.payload.user))
-      // KHÔNG lưu token vào localStorage
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.loading = false
@@ -50,10 +48,10 @@ const authSlice = createSlice({
       state.accessToken = null
       state.isAuthenticated = false
       localStorage.removeItem('user')
-      // Không cần xóa token vì không lưu trong localStorage
     },
     updateUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload
+      state.isAuthenticated = true
       localStorage.setItem('user', JSON.stringify(action.payload))
     },
     setAccessToken: (state, action: PayloadAction<string>) => {

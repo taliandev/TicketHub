@@ -16,14 +16,14 @@ interface User {
 
 interface AuthResponse {
   user: User
-  accessToken: string // Changed from 'token' to 'accessToken'
+  accessToken: string 
 }
 
 interface LoginCredentials {
-  identifier?: string  // email or username
-  email?: string       // for backward compatibility
+  identifier?: string 
+  email?: string 
   password: string
-  [key: string]: unknown // Add index signature
+  [key: string]: unknown
 }
 
 interface RegisterData {
@@ -31,7 +31,7 @@ interface RegisterData {
   email: string
   password: string
   fullName: string
-  [key: string]: unknown // Add index signature
+  [key: string]: unknown
 }
 
 export const useAuth = () => {
@@ -91,18 +91,33 @@ export const useAuth = () => {
     [dispatch]
   )
 
-  // Try to restore session using refresh token
   const restoreSession = useCallback(async () => {
     try {
-      const response = await axiosInstance.post<AuthResponse>('/auth/refresh')
-      const { accessToken, user } = response.data
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/refresh`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
       
-      dispatch(setAccessToken(accessToken))
-      dispatch(updateUser(user))
+      if (response.status === 200) {
+        const data: AuthResponse = await response.json()
+        const { accessToken, user } = data
+        
+        dispatch(setAccessToken(accessToken))
+        dispatch(updateUser(user))
+        
+        return { success: true }
+      }
       
-      return { success: true }
+      dispatch(clearAuth())
+      return { success: false }
     } catch (error) {
-      // Refresh token expired or invalid
+
       dispatch(clearAuth())
       return { success: false }
     }
@@ -110,7 +125,7 @@ export const useAuth = () => {
 
   return {
     user,
-    accessToken, // Changed from 'token'
+    accessToken, 
     isAuthenticated,
     loading,
     error,

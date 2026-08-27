@@ -16,15 +16,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      // Try to restore session silently (no error if fails)
-      await restoreSession();
-      setIsRestoring(false);
+      try {
+        const savedUser = localStorage.getItem('user')
+        
+        if (savedUser) {
+          await restoreSession();
+        } else {
+          setIsRestoring(false);
+          return;
+        }
+      } catch (error) {
+        // Silent catch - expected when user is not logged in
+      } finally {
+        setIsRestoring(false);
+      }
     };
 
     initAuth();
-  }, []); // Only run once on mount
+  }, []);
 
-  // Show loading spinner while restoring session
   if (isRestoring) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">

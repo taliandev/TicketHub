@@ -93,8 +93,10 @@ export const useAuth = () => {
 
   const restoreSession = useCallback(async () => {
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://tickethub-2-hebl.onrender.com'
+      
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/refresh`,
+        `${apiUrl}/api/auth/refresh`,
         {
           method: 'POST',
           credentials: 'include',
@@ -119,6 +121,7 @@ export const useAuth = () => {
       return { success: false }
     } catch (error) {
       // Silent catch - network errors or CORS issues
+      console.error('[Auth] Restore session failed:', error)
       dispatch(clearAuth())
       return { success: false }
     }

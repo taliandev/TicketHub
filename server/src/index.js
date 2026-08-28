@@ -26,11 +26,11 @@ app.use(cors({
     "http://localhost:5173",
     "https://client-tickethub.vercel.app",
     "https://client-tau-lake.vercel.app",
-    "https://talian-tickethub.vercel.app",
-    /\.vercel\.app$/
+    "https://talian-tickethub.vercel.app", 
+    /\.vercel\.app$/ 
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  credentials: true
+  credentials: true 
 }));
 
 // Debug middleware - log cookies in production

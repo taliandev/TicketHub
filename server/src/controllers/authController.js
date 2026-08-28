@@ -23,23 +23,23 @@ const generateRefreshToken = (userId) => {
 const setRefreshTokenCookie = (res, refreshToken) => {
   const isProduction = process.env.NODE_ENV === 'production';
   
+  // Force SameSite=None for cross-origin (since we're using different domains)
   const cookieOptions = {
     httpOnly: true,
-    secure: isProduction, // HTTPS required
-    sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin in production
+    secure: true, // Always true - both dev and prod use HTTPS/localhost
+    sameSite: 'none', // 'none' required for cross-origin cookies
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: '/',
   };
 
-  // Production debug logging - can remove after fixing
-  if (isProduction) {
-    console.log('[Cookie] Setting refresh token:', {
-      secure: cookieOptions.secure,
-      sameSite: cookieOptions.sameSite,
-      httpOnly: cookieOptions.httpOnly,
-      path: cookieOptions.path
-    });
-  }
+  // Debug logging
+  console.log('[Cookie] Setting refresh token:', {
+    NODE_ENV: process.env.NODE_ENV,
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    httpOnly: cookieOptions.httpOnly,
+    path: cookieOptions.path
+  });
 
   res.cookie('refreshToken', refreshToken, cookieOptions);
 };

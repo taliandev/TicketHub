@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { connectDB } from './config/db.js';
+import { getRedisInfo, cacheHealthCheck } from './utils/cache.js';
 import authRoutes from './routes/authRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
@@ -21,14 +22,28 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
-    "http://localhost:3000", 
+    "http://localhost:3000",
+    "http://localhost:5173",
     "https://client-tickethub.vercel.app",
     "https://client-tau-lake.vercel.app",
-    /\.vercel\.app$/ // Allow all Vercel preview deployments
+    "https://talian-tickethub.vercel.app",
+    /\.vercel\.app$/
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true // Important: Allow cookies
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  credentials: true
 }));
+
+// Debug middleware - log cookies in production
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.path.includes('/auth')) {
+    console.log(`[${req.method}] ${req.path}`);
+    console.log('  Origin:', req.headers.origin);
+    console.log('  Cookies:', Object.keys(req.cookies).join(', ') || 'none');
+    console.log('  Cookie header:', req.headers.cookie ? 'present' : 'missing');
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(cookieParser()); // Parse cookies
 app.use(morgan('dev'));
@@ -44,6 +59,22 @@ app.use('/api/organizer', organizerRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to TicketHub API' });
+});
+
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+  const redisInfo = getRedisInfo();
+  const redisHealthy = await cacheHealthCheck();
+  
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    redis: {
+      ...redisInfo,
+      healthy: redisHealthy,
+    },
+    database: 'connected', // You can add DB health check here
+  });
 });
 
 // Error handling middleware

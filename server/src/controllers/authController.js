@@ -25,11 +25,10 @@ const setRefreshTokenCookie = (res, refreshToken) => {
   
   const cookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction, // HTTPS required
+    sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin in production
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: '/',
-    // Don't set domain - let browser handle it
   };
 
   // Production debug logging - can remove after fixing

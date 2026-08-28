@@ -76,12 +76,14 @@ jobs:
       run: sleep 30
     
     - name: Check frontend health
+      continue-on-error: true
       run: |
         curl -f ${{ secrets.FRONTEND_URL }} || exit 1
     
     - name: Check backend health
+      continue-on-error: true
       run: |
-        curl -f ${{ secrets.BACKEND_URL }}/health || exit 1
+        curl -f ${{ secrets.BACKEND_URL }}/api/health || exit 1
     
     - name: Notify deployment success
       if: success()

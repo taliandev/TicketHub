@@ -36,7 +36,7 @@ const processQueue = (error: any, token: string | null = null) => {
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const state = store.getState()
-    const token = state.auth.accessToken // Lấy từ Redux store (memory)
+    const token = state.auth.accessToken 
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`

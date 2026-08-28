@@ -207,6 +207,9 @@ const EventDetail = () => {
   const selectedTicket = event.ticketTypes.find((t) => t.name === selectedType)
   const total = selectedTicket ? selectedTicket.price * quantity : 0
   const remaining = selectedTicket ? selectedTicket.available - (selectedTicket.sold || 0) : 0
+  const purchaseLimit = selectedTicket?.purchaseLimit || remaining
+  
+  const maxQuantity = Math.min(remaining, purchaseLimit)
   const isSoldOut = remaining <= 0
   
   // Check event status
@@ -433,8 +436,9 @@ const EventDetail = () => {
                 </label>
                 <button
                   type="button"
-                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-lg font-bold hover:bg-purple-600 hover:border-purple-600 transition-all duration-200 text-white"
+                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-lg font-bold hover:bg-purple-600 hover:border-purple-600 transition-all duration-200 text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-800 disabled:hover:border-gray-700"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
                   aria-label="Giảm số lượng"
                 >
                   -
@@ -443,21 +447,28 @@ const EventDetail = () => {
                   id="quantity"
                   type="number"
                   min={1}
-                  max={remaining}
+                  max={maxQuantity}
                   value={quantity}
                   onChange={(e) =>
-                    setQuantity(Math.max(1, Math.min(Number(e.target.value), remaining)))
+                    setQuantity(Math.max(1, Math.min(Number(e.target.value), maxQuantity)))
                   }
                   className="w-20 text-center border border-gray-700 bg-gray-800/50 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
                 />
                 <button
                   type="button"
-                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-lg font-bold hover:bg-purple-600 hover:border-purple-600 transition-all duration-200 text-white"
-                  onClick={() => setQuantity((q) => Math.min(q + 1, remaining))}
+                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-lg font-bold hover:bg-purple-600 hover:border-purple-600 transition-all duration-200 text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-800 disabled:hover:border-gray-700"
+                  onClick={() => setQuantity((q) => Math.min(q + 1, maxQuantity))}
+                  disabled={quantity >= maxQuantity}
                   aria-label="Tăng số lượng"
                 >
                   +
                 </button>
+                {/* Show limit info inline when user is at max */}
+                {quantity >= maxQuantity && selectedTicket?.purchaseLimit && selectedTicket.purchaseLimit < remaining && (
+                  <span className="text-sm text-yellow-400 ml-2">
+                    (Tối đa {selectedTicket.purchaseLimit} vé/người)
+                  </span>
+                )}
               </div>
 
               <div className="mb-4 text-xl font-semibold text-right text-white">

@@ -70,13 +70,20 @@ router.get('/by-ids', async (req, res) => {
   }
 });
 
-// Get event by ID
+// Get event by ID and increment view count
 router.get('/:id', async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
+    // Increment view count atomically and return updated document
+    const event = await Event.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } }, // Atomic increment
+      { new: true } // Return updated document
+    );
+    
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
+    
     res.json(event);
   } catch (error) {
     res.status(500).json({ message: error.message });

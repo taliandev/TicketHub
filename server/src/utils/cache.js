@@ -1,14 +1,29 @@
 import Redis from 'ioredis';
 
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD,
-  retryDelayOnFailover: 100,
-  maxRetriesPerRequest: 1,
-  enableOfflineQueue: false,
-  lazyConnect: true,
-});
+
+const createRedisClient = () => {
+  if (process.env.REDIS_URL) {
+    return new Redis(process.env.REDIS_URL, {
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      lazyConnect: true,
+      tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+    });
+  }
+  
+  return new Redis({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT || 6379,
+    password: process.env.REDIS_PASSWORD,
+    retryDelayOnFailover: 100,
+    maxRetriesPerRequest: 1,
+    enableOfflineQueue: false,
+    lazyConnect: true,
+  });
+};
+
+const redis = createRedisClient();
 
 let isRedisConnected = false;
 
@@ -17,16 +32,36 @@ redis.on('connect', () => {
 });
 
 redis.on('error', (err) => {
-  console.warn('⚠️  Redis unavailable (running without cache)');
+  console.warn('Redis unavailable (running without cache)');
   isRedisConnected = false;
 });
 
-// Try connect but don't crash
+redis.on('close', () => {
+  isRedisConnected = false;
+});
+
 redis.connect().catch(() => {
-  console.warn('⚠️  Starting without Redis cache');
+  // Silent fail - server will work without cache
 });
 
 export const isRedisAvailable = () => isRedisConnected;
+
+export const getRedisInfo = () => {
+  const config = {
+    mode: process.env.REDIS_URL ? 'URL (Cloud)' : 'Host/Port (Local)',
+    connected: isRedisConnected,
+    host: process.env.REDIS_URL 
+      ? process.env.REDIS_URL.split('@')[1]?.split(':')[0] || 'hidden'
+      : process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_URL
+      ? process.env.REDIS_URL.split(':').pop() || 'hidden'
+      : process.env.REDIS_PORT || 6379,
+    tls: process.env.REDIS_TLS === 'true',
+    hasPassword: !!(process.env.REDIS_PASSWORD || process.env.REDIS_URL?.includes('@')),
+  };
+  
+  return config;
+};
 
 // Cache configuration
 const CACHE_TTL = {

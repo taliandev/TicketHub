@@ -74,12 +74,10 @@ export const useAuth = () => {
 
   const logout = useCallback(async () => {
     try {
-      // Call logout endpoint to clear refresh token cookie
       await axiosInstance.post('/auth/logout')
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      // Clear auth state regardless of API call result
       dispatch(logoutAction())
     }
   }, [dispatch])
@@ -116,12 +114,9 @@ export const useAuth = () => {
         return { success: true }
       }
       
-      // 204 or 401 - No refresh token or invalid (expected)
       dispatch(clearAuth())
       return { success: false }
     } catch (error) {
-      // Silent catch - network errors or CORS issues
-      console.error('[Auth] Restore session failed:', error)
       dispatch(clearAuth())
       return { success: false }
     }

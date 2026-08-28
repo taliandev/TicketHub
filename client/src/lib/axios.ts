@@ -7,19 +7,13 @@ import { toast } from './toast'
 const API_URL = import.meta.env.VITE_API_URL || 'https://tickethub-2-hebl.onrender.com'
 const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 10000
 
-// Log API URL in production for debugging
-if (import.meta.env.PROD) {
-  console.log('[Config] API URL:', API_URL)
-}
-
-// Create axios instance
 export const axiosInstance = axios.create({
   baseURL: `${API_URL}/api`,
   timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important: Send cookies with requests
+  withCredentials: true,
 })
 
 let isRefreshing = false

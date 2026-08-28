@@ -21,8 +21,6 @@ const generateRefreshToken = (userId) => {
 };
 
 const setRefreshTokenCookie = (res, refreshToken) => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  
   // Force SameSite=None for cross-origin (since we're using different domains)
   const cookieOptions = {
     httpOnly: true,
@@ -31,15 +29,6 @@ const setRefreshTokenCookie = (res, refreshToken) => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: '/',
   };
-
-  // Debug logging
-  console.log('[Cookie] Setting refresh token:', {
-    NODE_ENV: process.env.NODE_ENV,
-    secure: cookieOptions.secure,
-    sameSite: cookieOptions.sameSite,
-    httpOnly: cookieOptions.httpOnly,
-    path: cookieOptions.path
-  });
 
   res.cookie('refreshToken', refreshToken, cookieOptions);
 };
@@ -347,22 +336,12 @@ export const changePassword = async (req, res) => {
 
 // Refresh access token using refresh token from cookie
 export const refreshAccessToken = async (req, res) => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  
   try {
     const { refreshToken } = req.cookies;
 
-    // Production debug logging - can remove after fixing
-    if (isProduction) {
-      console.log('[Refresh] Request origin:', req.headers.origin);
-      console.log('[Refresh] Cookies received:', Object.keys(req.cookies).join(', ') || 'none');
-      console.log('[Refresh] Has refreshToken:', !!refreshToken);
-    }
-
     if (!refreshToken) {
-      if (isProduction) {
-        console.log('[Refresh] No refresh token - returning 204');
-      }
+      // Return 204 instead of 401 for missing token (expected case)
+      // This prevents browser from logging it as an error
       return res.status(204).end();
     }
 
@@ -371,9 +350,7 @@ export const refreshAccessToken = async (req, res) => {
     try {
       decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'your_jwt_refresh_secret');
     } catch (err) {
-      if (isProduction) {
-        console.log('[Refresh] Token verification failed:', err.message);
-      }
+      // Invalid/expired token - return 204 (silent fail)
       return res.status(204).end();
     }
 
@@ -381,26 +358,18 @@ export const refreshAccessToken = async (req, res) => {
     const user = await User.findById(decoded.id);
     
     if (!user || user.refreshToken !== refreshToken) {
-      if (isProduction) {
-        console.log('[Refresh] User not found or token mismatch');
-      }
+      // Invalid token - return 204 (silent fail)
       return res.status(204).end();
     }
 
     // Check if refresh token is expired
     if (user.refreshTokenExpires && user.refreshTokenExpires < new Date()) {
-      if (isProduction) {
-        console.log('[Refresh] Token expired in DB');
-      }
+      // Expired token - return 204 (silent fail)
       return res.status(204).end();
     }
 
     // Generate new access token
     const accessToken = generateAccessToken(user._id);
-
-    if (isProduction) {
-      console.log('[Refresh] Success - user:', user.username);
-    }
 
     res.json({
       accessToken,

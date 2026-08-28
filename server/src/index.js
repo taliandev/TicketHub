@@ -33,20 +33,13 @@ app.use(cors({
   credentials: true 
 }));
 
-// Debug middleware - log cookies in production
-app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'production' && req.path.includes('/auth')) {
-    console.log(`[${req.method}] ${req.path}`);
-    console.log('  Origin:', req.headers.origin);
-    console.log('  Cookies:', Object.keys(req.cookies).join(', ') || 'none');
-    console.log('  Cookie header:', req.headers.cookie ? 'present' : 'missing');
-  }
-  next();
-});
-
 app.use(express.json());
-app.use(cookieParser()); // Parse cookies
-app.use(morgan('dev'));
+app.use(cookieParser());
+
+// Only use morgan in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
 
 // Routes
 app.use('/api/auth', authRoutes);

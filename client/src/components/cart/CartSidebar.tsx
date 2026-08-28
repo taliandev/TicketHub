@@ -81,6 +81,7 @@ const CartSidebar = () => {
           <button
             onClick={() => dispatch(closeCart())}
             className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Đóng giỏ hàng"
           >
             <svg
               className="w-6 h-6 text-gray-400"

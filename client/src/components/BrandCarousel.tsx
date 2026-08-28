@@ -9,7 +9,7 @@ interface Brand {
 const BrandCarousel: React.FC = () => {
   const brands: Brand[] = [
     { id: 1, name: "Brand 1", logo: "https://t3.ftcdn.net/jpg/04/98/42/64/360_F_498426499_uCtXeEK9VwGDjNRYkVCoMZl1JfZth53n.jpg" },
-    { id: 2, name: "Brand 2", logo: "https://static.vecteezy.com/system/resources/previews/018/791/246/non_2x/three-letter-cube-h-alphabet-letter-logo-icon-design-with-polygon-design-creative-template-for-company-and-business-vector.jpg" },
+    { id: 2, name: "Brand 2", logo: "https://placehold.co/200x200/1a1a1a/a855f7?text=Brand+2" },
     { id: 3, name: "Brand 3", logo: "https://s3-ap-southeast-1.amazonaws.com/tm-public-file/trusted-logo-GVF.png?dxx" },
     { id: 4, name: "Brand 4", logo: "https://s3-ap-southeast-1.amazonaws.com/tm-public-file/trusted-logo-wdf.png?dxx" },
     { id: 5, name: "Brand 5", logo: "https://s3-ap-southeast-1.amazonaws.com/tm-public-file/trusted-logo-AEG.png?dxx" },

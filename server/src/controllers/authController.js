@@ -23,12 +23,26 @@ const generateRefreshToken = (userId) => {
 const setRefreshTokenCookie = (res, refreshToken) => {
   const isProduction = process.env.NODE_ENV === 'production';
   
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true, // Không thể truy cập từ JavaScript
-    secure: isProduction, // HTTPS only in production
-    sameSite: isProduction ? 'none' : 'strict', // 'none' for cross-origin in production
+  const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
+    path: '/',
+    // Don't set domain - let browser handle it
+  };
+
+  // Production debug logging - can remove after fixing
+  if (isProduction) {
+    console.log('[Cookie] Setting refresh token:', {
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      httpOnly: cookieOptions.httpOnly,
+      path: cookieOptions.path
+    });
+  }
+
+  res.cookie('refreshToken', refreshToken, cookieOptions);
 };
 
 // Register new user
@@ -334,11 +348,23 @@ export const changePassword = async (req, res) => {
 
 // Refresh access token using refresh token from cookie
 export const refreshAccessToken = async (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   try {
     const { refreshToken } = req.cookies;
 
+    // Production debug logging - can remove after fixing
+    if (isProduction) {
+      console.log('[Refresh] Request origin:', req.headers.origin);
+      console.log('[Refresh] Cookies received:', Object.keys(req.cookies).join(', ') || 'none');
+      console.log('[Refresh] Has refreshToken:', !!refreshToken);
+    }
+
     if (!refreshToken) {
-      return res.status(401).json({ message: 'Refresh token not found' });
+      if (isProduction) {
+        console.log('[Refresh] No refresh token - returning 204');
+      }
+      return res.status(204).end();
     }
 
     // Verify refresh token
@@ -346,23 +372,36 @@ export const refreshAccessToken = async (req, res) => {
     try {
       decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'your_jwt_refresh_secret');
     } catch (err) {
-      return res.status(401).json({ message: 'Invalid or expired refresh token' });
+      if (isProduction) {
+        console.log('[Refresh] Token verification failed:', err.message);
+      }
+      return res.status(204).end();
     }
 
     // Find user and verify refresh token matches
     const user = await User.findById(decoded.id);
     
     if (!user || user.refreshToken !== refreshToken) {
-      return res.status(401).json({ message: 'Invalid refresh token' });
+      if (isProduction) {
+        console.log('[Refresh] User not found or token mismatch');
+      }
+      return res.status(204).end();
     }
 
     // Check if refresh token is expired
     if (user.refreshTokenExpires && user.refreshTokenExpires < new Date()) {
-      return res.status(401).json({ message: 'Refresh token expired' });
+      if (isProduction) {
+        console.log('[Refresh] Token expired in DB');
+      }
+      return res.status(204).end();
     }
 
     // Generate new access token
     const accessToken = generateAccessToken(user._id);
+
+    if (isProduction) {
+      console.log('[Refresh] Success - user:', user.username);
+    }
 
     res.json({
       accessToken,
@@ -375,7 +414,7 @@ export const refreshAccessToken = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Refresh token error:', error);
+    console.error('[Refresh] Error:', error);
     res.status(500).json({ message: 'Lỗi server' });
   }
 };

@@ -114,10 +114,11 @@ export const useAuth = () => {
         return { success: true }
       }
       
+      // 204 or 401 - No refresh token or invalid (expected)
       dispatch(clearAuth())
       return { success: false }
     } catch (error) {
-
+      // Silent catch - network errors or CORS issues
       dispatch(clearAuth())
       return { success: false }
     }

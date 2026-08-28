@@ -26,6 +26,20 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
     arrows: true,
     fade: true,
     cssEase: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    beforeChange: (current: number, next: number) => {
+      // Remove tabindex from all slides
+      const slides = document.querySelectorAll('.slick-slide')
+      slides.forEach((slide) => {
+        const links = slide.querySelectorAll('a, button')
+        links.forEach((link) => {
+          if (!slide.classList.contains('slick-active')) {
+            link.setAttribute('tabindex', '-1')
+          } else {
+            link.removeAttribute('tabindex')
+          }
+        })
+      })
+    },
   }
 
   if (events.length === 0) {
@@ -164,7 +178,7 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
                     {/* CTA Buttons */}
                     <div className="flex flex-wrap gap-4 pt-2">
                       <Link to={`/events/${event._id}`}>
-                        <button className={`group relative px-8 py-3 rounded-lg font-semibold overflow-hidden transition-all duration-300 ${
+                        <button className={`group relative px-8 py-4 rounded-lg font-semibold overflow-hidden transition-all duration-300 min-h-[48px] ${
                           eventStatus.isExpired
                             ? 'bg-gray-600 text-white hover:bg-gray-700'
                             : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/50'
@@ -188,7 +202,7 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
                         </button>
                       </Link>
 
-                      <button className="px-8 py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold border border-white/20 hover:bg-white/20 transition-all duration-300">
+                      <button className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold border border-white/20 hover:bg-white/20 transition-all duration-300 min-h-[48px]">
                         Chia sẻ
                       </button>
                     </div>

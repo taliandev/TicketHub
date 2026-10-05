@@ -28,7 +28,7 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
     cssEase: 'cubic-bezier(0.4, 0, 0.2, 1)',
     swipeToSlide: true,
     touchThreshold: 10,
-    beforeChange: (_current: number, _next: number) => {
+    beforeChange: () => {
       // Remove tabindex from all slides
       const slides = document.querySelectorAll('.slick-slide')
       slides.forEach((slide) => {

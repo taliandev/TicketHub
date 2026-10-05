@@ -138,14 +138,16 @@ export default function Events() {
           return a.title.localeCompare(b.title)
         case 'views':
           return (b.views || 0) - (a.views || 0)
-        case 'price-asc':
+        case 'price-asc': {
           const minPriceA = a.ticketTypes?.length ? Math.min(...a.ticketTypes.map((t: any) => t.price || 0)) : 0
           const minPriceB = b.ticketTypes?.length ? Math.min(...b.ticketTypes.map((t: any) => t.price || 0)) : 0
           return minPriceA - minPriceB
-        case 'price-desc':
+        }
+        case 'price-desc': {
           const maxPriceA = a.ticketTypes?.length ? Math.max(...a.ticketTypes.map((t: any) => t.price || 0)) : 0
           const maxPriceB = b.ticketTypes?.length ? Math.max(...b.ticketTypes.map((t: any) => t.price || 0)) : 0
           return maxPriceB - maxPriceA
+        }
         default:
           return 0
       }

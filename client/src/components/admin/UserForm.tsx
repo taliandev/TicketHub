@@ -3,24 +3,36 @@ import { useUpdateUser } from '@/hooks/useAdminDashboard';
 import Button from '../ui/Button';
 import { Input } from '../ui/Input';
 import api from '@/lib/api';
+import type { User } from '@/types';
+import type { ApiError } from '@/types/api';
 
 interface UserFormProps {
-  user: any;
+  user: User | null;
   onSuccess: () => void;
   onCancel: () => void;
+}
+
+interface UserFormData {
+  username: string;
+  email: string;
+  fullName: string;
+  password: string;
+  role: 'user' | 'organizer' | 'admin';
+  isBanned: boolean;
+  isVerified: boolean;
 }
 
 const UserForm = ({ user, onSuccess, onCancel }: UserFormProps) => {
   const isEdit = !!user;
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UserFormData>({
     username: user?.username || '',
     email: user?.email || '',
     fullName: user?.fullName || '',
     password: '',
     role: user?.role || 'user',
-    isBanned: user?.isBanned || false,
-    isVerified: user?.isVerified || false,
+    isBanned: false,
+    isVerified: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -33,13 +45,13 @@ const UserForm = ({ user, onSuccess, onCancel }: UserFormProps) => {
     setLoading(true);
     
     try {
-      if (isEdit) {
+      if (isEdit && user) {
         // Update existing user
-        const updates: any = {
+        const updates = {
           role: formData.role,
           isBanned: formData.isBanned,
           isVerified: formData.isVerified,
-        };
+        } as Record<string, unknown>;
         
         await updateUser.mutateAsync({
           userId: user._id,
@@ -68,8 +80,9 @@ const UserForm = ({ user, onSuccess, onCancel }: UserFormProps) => {
       }
       
       onSuccess();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra');
+    } catch (err) {
+      const error = err as ApiError;
+      setError(error.response?.data?.message || 'Có lỗi xảy ra');
     } finally {
       setLoading(false);
     }
@@ -97,7 +110,7 @@ const UserForm = ({ user, onSuccess, onCancel }: UserFormProps) => {
             <div>
               <span className="text-gray-600">Ngày tạo:</span>
               <p className="font-medium text-gray-900">
-                {new Date(user?.createdAt).toLocaleDateString('vi-VN')}
+                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
               </p>
             </div>
           </div>
@@ -166,7 +179,7 @@ const UserForm = ({ user, onSuccess, onCancel }: UserFormProps) => {
         </label>
         <select
           value={formData.role}
-          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, role: e.target.value as 'user' | 'organizer' | 'admin' })}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="user">User</option>

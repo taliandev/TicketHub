@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axiosInstance from '@/lib/axios'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { toast } from 'sonner'
+import type { AxiosError } from 'axios'
 
 interface Application {
   _id: string
@@ -29,6 +30,10 @@ interface Application {
   rejectionReason?: string
 }
 
+interface ApiErrorResponse {
+  message?: string;
+}
+
 const OrganizerApplications = () => {
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,23 +44,24 @@ const OrganizerApplications = () => {
   const [rejectionReason, setRejectionReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
 
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       setLoading(true)
       const statusParam = filter === 'ALL' ? '' : filter
       const { data } = await axiosInstance.get(`/organizer/applications?status=${statusParam}`)
       setApplications(data.applications)
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as AxiosError<ApiErrorResponse>
       toast.error('Lỗi khi tải danh sách đơn đăng ký')
-      console.error(error)
+      console.error(err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter])
 
   useEffect(() => {
     fetchApplications()
-  }, [filter])
+  }, [fetchApplications])
 
   const handleApprove = async (id: string) => {
     if (!confirm('Xác nhận phê duyệt đơn đăng ký này?')) return
@@ -66,8 +72,9 @@ const OrganizerApplications = () => {
       toast.success('Đã phê duyệt đơn đăng ký')
       fetchApplications()
       setSelectedApp(null)
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Lỗi khi phê duyệt')
+    } catch (error) {
+      const err = error as AxiosError<ApiErrorResponse>
+      toast.error(err.response?.data?.message || 'Lỗi khi phê duyệt')
     } finally {
       setActionLoading(false)
     }
@@ -89,8 +96,9 @@ const OrganizerApplications = () => {
       setShowRejectModal(false)
       setSelectedApp(null)
       setRejectionReason('')
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Lỗi khi từ chối')
+    } catch (error) {
+      const err = error as AxiosError<ApiErrorResponse>
+      toast.error(err.response?.data?.message || 'Lỗi khi từ chối')
     } finally {
       setActionLoading(false)
     }

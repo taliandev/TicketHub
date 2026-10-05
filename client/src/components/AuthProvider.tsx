@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from './ui/LoadingSpinner';
 
@@ -14,26 +14,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { restoreSession } = useAuth();
   const [isRestoring, setIsRestoring] = useState(true);
 
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const savedUser = localStorage.getItem('user')
-        
-        if (savedUser) {
-          await restoreSession();
-        } else {
-          setIsRestoring(false);
-          return;
-        }
-      } catch (error) {
-        // Silent catch - expected when user is not logged in
-      } finally {
+  const initAuth = useCallback(async () => {
+    try {
+      const savedUser = localStorage.getItem('user')
+      
+      if (savedUser) {
+        await restoreSession();
+      } else {
         setIsRestoring(false);
+        return;
       }
-    };
+    } catch (error) {
+      // Silent catch - expected when user is not logged in
+    } finally {
+      setIsRestoring(false);
+    }
+  }, [restoreSession]);
 
+  useEffect(() => {
     initAuth();
-  }, []);
+  }, [initAuth]);
 
   if (isRestoring) {
     return (

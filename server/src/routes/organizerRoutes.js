@@ -8,13 +8,25 @@ import {
   getEventAttendees,
   getOrganizerRevenue,
   getOrganizerTickets,
-  verifyTicket
+  verifyTicket,
+  submitApplication,
+  getApplications,
+  approveApplication,
+  rejectApplication
 } from '../controllers/organizerController.js';
-import { authenticate, isOrganizer } from '../middleware/auth.js';
+import { authenticate, isOrganizer, isAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All routes require authentication and organizer role
+// Public application route (only requires authentication, not organizer role)
+router.post('/applications', authenticate, submitApplication);
+
+// Admin routes for managing applications
+router.get('/applications', authenticate, isAdmin, getApplications);
+router.put('/applications/:id/approve', authenticate, isAdmin, approveApplication);
+router.put('/applications/:id/reject', authenticate, isAdmin, rejectApplication);
+
+// All routes below require authentication and organizer role
 router.use(authenticate);
 router.use(isOrganizer);
 

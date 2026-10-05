@@ -27,18 +27,35 @@ export interface TicketType {
   purchaseLimit?: number
 }
 
-// Fetch all events
-export const useEvents = () => {
-  return useQuery<Event[], Error>(
-    ['events'],
+export interface PaginationInfo {
+  currentPage: number
+  totalPages: number
+  totalEvents: number
+  hasMore: boolean
+}
+
+export interface EventsResponse {
+  events: Event[]
+  pagination: PaginationInfo
+}
+
+// Fetch paginated events
+export const useEvents = (page = 1, limit = 16, includeExpired = false) => {
+  return useQuery<EventsResponse, Error>(
+    ['events', page, limit, includeExpired],
     async () => {
-      const response = await api.get<Event[]>(API_ENDPOINTS.EVENTS)
+      const response = await api.get<EventsResponse>(API_ENDPOINTS.EVENTS, {
+        page: page.toString(),
+        limit: limit.toString(),
+        includeExpired: includeExpired.toString()
+      })
       return response.data
     },
     {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
       retry: 2,
+      keepPreviousData: true,
       onError: (error) => {
         console.error('Error fetching events:', handleApiError(error))
       },
@@ -46,7 +63,6 @@ export const useEvents = () => {
   )
 }
 
-// Fetch single event by ID
 export const useEvent = (id: string | undefined) => {
   return useQuery<Event, Error>(
     ['event', id],
@@ -66,7 +82,6 @@ export const useEvent = (id: string | undefined) => {
   )
 }
 
-// Fetch events by IDs
 export const useEventsByIds = (ids: string[]) => {
   return useQuery<Event[], Error>(
     ['events', 'by-ids', ids],
@@ -85,7 +100,6 @@ export const useEventsByIds = (ids: string[]) => {
   )
 }
 
-// Create event mutation
 export const useCreateEvent = () => {
   const queryClient = useQueryClient()
 
@@ -105,7 +119,6 @@ export const useCreateEvent = () => {
   )
 }
 
-// Update event mutation
 export const useUpdateEvent = () => {
   const queryClient = useQueryClient()
 
@@ -126,7 +139,6 @@ export const useUpdateEvent = () => {
   )
 }
 
-// Delete event mutation
 export const useDeleteEvent = () => {
   const queryClient = useQueryClient()
 

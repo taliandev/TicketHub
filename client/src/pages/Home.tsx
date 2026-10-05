@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import Card from '../components/ui/Card'
 import BannerSlider from '../components/BannerSlider'
 import BrandCarousel from '../components/BrandCarousel'
+import WhyTicketHubPass from '../components/WhyTicketHubPass'
 import { EventListSkeleton } from '../components/ui/Skeleton'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import { useEvents } from '../hooks/useEvents'
@@ -9,7 +10,8 @@ import { useRecentEvents } from '../hooks/useRecentEvents'
 import { getErrorMessage } from '../lib/errorHandler'
 
 const Home = () => {
-  const { data: events = [], isLoading, error, refetch } = useEvents()
+  const { data: eventsData, isLoading, error, refetch } = useEvents(1, 100) // Load first 100 for home page
+  const events = eventsData?.events || []
   const { recentEvents, clearRecentEvents, isLoading: recentLoading } = useRecentEvents()
 
   // Sort and filter events
@@ -59,12 +61,12 @@ const Home = () => {
 
       {/* Featured Events Section */}
       <section className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-between mb-12">
+        <div className="flex items-center justify-between mb-8 md:mb-12">
           <div>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-2">
-              <span className="text-purple-400">SỰ KIỆN</span> NỔI BẬT
+            <h2 className="text-3xl md:text-4xl lg:text-5xl pt-2 md:pt-4 pb-2 md:pb-4 font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-1 md:mb-2">
+              SỰ KIỆN NỔI BẬT
             </h2>
-            <p className="text-gray-400">Những điểm đến không thể bỏ lỡ trong tháng này</p>
+            <p className="text-sm md:text-base text-gray-400">Những điểm đến không thể bỏ lỡ trong tháng này</p>
           </div>
           {featuredEvents.length > 0 && (
             <Link to="/events" className="hidden md:block">
@@ -80,22 +82,48 @@ const Home = () => {
         
         {featuredEvents.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Desktop/Tablet: Responsive Grid */}
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 justify-items-center">
               {featuredEvents.map((event) => (
-                <Card
-                  key={event._id}
-                  id={event._id}
-                  img={event.img}
-                  date={event.date}
-                  title={event.title}
-                  description={event.description}
-                  location={event.location}
-                />
+                <div key={event._id} className="w-full max-w-[324px]">
+                  <Card
+                    id={event._id}
+                    img={event.img}
+                    date={event.date}
+                    title={event.title}
+                    description={event.description}
+                    location={event.location}
+                  />
+                </div>
               ))}
             </div>
-            <div className="flex justify-center mt-8 md:hidden">
-              <Link to="/events">
-                <button className="px-8 py-4 bg-purple-600 text-white font-bold rounded-full hover:bg-purple-500 transition-all duration-300">
+            
+            {/* Mobile: Horizontal Carousel with Peek (Affordance for Swiping) */}
+            <div className="md:hidden overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+              <div className="flex gap-4 pl-4 pr-4">
+                {featuredEvents.map((event, index) => (
+                  <div 
+                    key={event._id} 
+                    className={`flex-shrink-0 snap-start ${
+                      index === 0 ? 'w-[calc(100vw-5rem)]' : 'w-[280px]'
+                    }`}
+                  >
+                    <Card
+                      id={event._id}
+                      img={event.img}
+                      date={event.date}
+                      title={event.title}
+                      description={event.description}
+                      location={event.location}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-center mt-6 md:mt-8">
+              <Link to="/events" className="md:hidden">
+                <button className="px-8 py-4 bg-purple-600 text-white font-bold rounded-full hover:bg-purple-500 transition-all duration-300 shadow-lg shadow-purple-500/30">
                   Xem tất cả sự kiện
                 </button>
               </Link>
@@ -126,64 +154,16 @@ const Home = () => {
         )}
       </section>
 
-      {/* Features Section - Always visible */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-900/10 to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(168,85,247,0.1)_0%,transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(6,182,212,0.1)_0%,transparent_50%)]" />
-        
-        <div className="relative container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              <span className="text-purple-400">TẠI SAO</span> CHỌN TICKETHUB?
-            </h2>
-            <p className="text-gray-400 text-lg">Trải nghiệm hoàn hảo từ mua vé đến tham dự sự kiện</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6',
-                title: 'Dễ dàng đặt vé',
-                desc: 'Đặt vé online chỉ trong vài phút với giao diện thân thiện và thanh toán an toàn',
-                color: 'purple'
-              },
-              {
-                icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-                title: 'Thanh toán linh hoạt',
-                desc: 'Hỗ trợ đa dạng phương thức thanh toán: MoMo, VNPay, Banking và nhiều hơn nữa',
-                color: 'cyan'
-              },
-              {
-                icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-                title: 'Check-in thông minh',
-                desc: 'Quét mã QR để check-in nhanh chóng, tiện lợi và theo dõi real-time',
-                color: 'pink'
-              }
-            ].map((feature, idx) => (
-              <div key={idx} className="group relative">
-                <div className={`relative h-full p-8 rounded-2xl border border-gray-800 bg-gray-900/50 hover:border-${feature.color}-500/50 transition-all duration-300 hover:transform hover:-translate-y-2`}>
-                  <div className={`inline-flex items-center justify-center w-16 h-16 mb-6 bg-${feature.color}-600 rounded-xl`}>
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={feature.icon} />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{feature.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Why TicketHub - Boarding Pass Style */}
+      <WhyTicketHubPass />
 
       {/* Brand Carousel - Always visible */}
-      <section className="py-16">
-        <div className="container mx-auto px-4 mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-white">
-            <span className="text-purple-400">ĐỐI TÁC</span> TIN TƯỞNG
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4 mb-8 md:mb-12">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 p-2 md:p-4">
+            ĐỐI TÁC TIN TƯỞNG
           </h2>
-          <p className="text-center text-gray-400 mt-2">Đồng hành cùng những thương hiệu hàng đầu</p>
+          <p className="text-center text-gray-400 mt-2 text-sm md:text-base">Đồng hành cùng những thương hiệu hàng đầu</p>
         </div>
         <BrandCarousel />
       </section>
@@ -191,37 +171,64 @@ const Home = () => {
 
       {/* Recent Events Section */}
       {recentEvents.length > 0 && (
-        <section className="container mx-auto px-4 py-16">
-          <div className="flex justify-between items-center mb-12">
+        <section className="container mx-auto px-4 py-12 md:py-16">
+          <div className="flex justify-between items-center mb-8 md:mb-12">
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-2">
-                <span className="text-purple-400">ĐÃ XEM</span> GẦN ĐÂY
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-1 md:mb-2 pt-2 md:pt-4">
+                ĐÃ XEM GẦN ĐÂY
               </h2>
-              <p className="text-gray-400">Các sự kiện bạn đã quan tâm</p>
+              <p className="text-sm md:text-base text-gray-400">Các sự kiện bạn đã quan tâm</p>
             </div>
             <button 
               onClick={clearRecentEvents}
-              className="px-4 py-2 text-sm text-gray-400 hover:text-purple-400 border border-gray-700 hover:border-purple-500/50 rounded-full transition-all duration-300"
+              className="px-3 md:px-4 py-2 text-xs md:text-sm text-gray-400 hover:text-purple-400 border border-gray-700 hover:border-purple-500/50 rounded-full transition-all duration-300"
             >
-              Xóa lịch sử
+              Xóa
             </button>
           </div>
           {recentLoading ? (
             <EventListSkeleton count={4} />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {recentEvents.map((event) => (
-                <Card
-                  key={event._id}
-                  id={event._id}
-                  img={event.img}
-                  date={event.date}
-                  title={event.title}
-                  description={event.description}
-                  location={event.location}
-                />
-              ))}
-            </div>
+            <>
+              {/* Desktop/Tablet: Responsive Grid */}
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 justify-items-center">
+                {recentEvents.slice(0, 4).map((event) => (
+                  <div key={event._id} className="w-full max-w-[324px]">
+                    <Card
+                      id={event._id}
+                      img={event.img}
+                      date={event.date}
+                      title={event.title}
+                      description={event.description}
+                      location={event.location}
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              {/* Mobile: Horizontal Carousel with Peek (Affordance for Swiping) */}
+              <div className="md:hidden overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+                <div className="flex gap-4 pl-4 pr-4">
+                  {recentEvents.slice(0, 4).map((event, index) => (
+                    <div 
+                      key={event._id} 
+                      className={`flex-shrink-0 snap-start ${
+                        index === 0 ? 'w-[calc(100vw-5rem)]' : 'w-[280px]'
+                      }`}
+                    >
+                      <Card
+                        id={event._id}
+                        img={event.img}
+                        date={event.date}
+                        title={event.title}
+                        description={event.description}
+                        location={event.location}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
         </section>
       )}

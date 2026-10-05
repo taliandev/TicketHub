@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/store'
 import { useEvent } from '@/hooks/useEvents'
 import { useRecentEvents } from '@/hooks/useRecentEvents'
-import { useCart } from '@/hooks/useCart'
 import { getErrorMessage } from '@/lib/errorHandler'
 import { getEventStatus, canBookEvent, formatEventDate } from '@/lib/eventUtils'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -12,7 +11,6 @@ import ErrorMessage from '@/components/ui/ErrorMessage'
 import LoginModal from '@/components/auth/LoginModal'
 import RegisterModal from '@/components/auth/RegisterModal'
 import { TicketType } from '@/hooks/useEvents'
-import { toast } from '@/lib/toast'
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>()
@@ -20,7 +18,6 @@ const EventDetail = () => {
   const user = useSelector((state: RootState) => state.auth.user)
   const { data: event, isLoading, error, refetch } = useEvent(id)
   const { addRecentEvent } = useRecentEvents()
-  const { addToCart, openCart } = useCart()
 
   const [showShare, setShowShare] = useState(false)
   const [selectedType, setSelectedType] = useState<string>('')
@@ -133,44 +130,7 @@ const EventDetail = () => {
     })
   }
 
-  const handleAddToCart = () => {
-    if (!agreed) {
-      setFormError('Bạn cần đồng ý với chính sách để tiếp tục.')
-      return
-    }
 
-    const selectedTicket = event?.ticketTypes.find((t) => t.name === selectedType)
-    if (!selectedTicket || !event) {
-      setFormError('Vui lòng chọn loại vé.')
-      return
-    }
-
-    setFormError('')
-
-    // Add to cart
-    addToCart({
-      id: `${event._id}-${selectedType}-${Date.now()}`,
-      eventId: event._id,
-      eventTitle: event.title,
-      eventImage: event.img,
-      eventDate: event.date,
-      eventLocation: event.location,
-      ticketType: selectedType,
-      ticketPrice: selectedTicket.price,
-      quantity,
-      maxQuantity: selectedTicket.available - (selectedTicket.sold || 0),
-    })
-
-    // Show success toast
-    toast.success(`Đã thêm ${quantity} vé vào giỏ hàng`)
-
-    // Open cart sidebar
-    openCart()
-
-    // Reset form
-    setQuantity(1)
-    setAgreed(false)
-  }
 
   if (isLoading) {
     return (
@@ -493,35 +453,21 @@ const EventDetail = () => {
 
               {formError && <div className="text-red-400 text-sm mb-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">{formError}</div>}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <button
-                  className={`py-4 rounded-xl font-bold transition-all duration-300 text-lg border-2 ${
-                    !agreed || !canBook
-                      ? 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
-                      : 'bg-transparent border-purple-600 text-purple-400 hover:bg-purple-600/10 active:scale-[0.98]'
-                  }`}
-                  disabled={!agreed || !canBook}
-                  onClick={handleAddToCart}
-                >
-                  Thêm vào giỏ
-                </button>
-
-                <button
-                  className={`py-4 rounded-xl font-bold transition-all duration-300 text-lg ${
-                    !agreed || !canBook
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-purple-600 text-white hover:bg-purple-500 hover:shadow-lg hover:shadow-purple-500/50 active:scale-[0.98]'
-                  }`}
-                  disabled={!agreed || !canBook}
-                  onClick={handleContinue}
-                >
-                  {eventStatus.isExpired 
-                    ? 'Sự kiện đã kết thúc' 
-                    : isSoldOut 
-                    ? 'Hết vé' 
-                    : 'Mua ngay'}
-                </button>
-              </div>
+              <button
+                className={`w-full py-4 rounded-xl font-bold transition-all duration-300 text-lg ${
+                  !agreed || !canBook
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-purple-600 text-white hover:bg-purple-500 hover:shadow-lg hover:shadow-purple-500/50 active:scale-[0.98]'
+                }`}
+                disabled={!agreed || !canBook}
+                onClick={handleContinue}
+              >
+                {eventStatus.isExpired 
+                  ? 'Sự kiện đã kết thúc' 
+                  : isSoldOut 
+                  ? 'Hết vé' 
+                  : 'Mua ngay'}
+              </button>
             </div>
           )}
         </div>

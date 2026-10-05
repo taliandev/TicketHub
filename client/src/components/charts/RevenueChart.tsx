@@ -73,6 +73,7 @@ const RevenueChart = ({ data, period = 'month' }: RevenueChartProps) => {
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => `${value}M`}
+          domain={[0, 'auto']}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend 

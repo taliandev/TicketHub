@@ -231,16 +231,20 @@ export const getRevenueAnalytics = async (req, res) => {
     
     let dateRange;
     let groupBy;
+    let daysCount;
     
     if (period === 'week') {
       dateRange = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       groupBy = { $dayOfMonth: '$purchaseDate' };
+      daysCount = 7;
     } else if (period === 'year') {
       dateRange = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
       groupBy = { $month: '$purchaseDate' };
+      daysCount = 12;
     } else {
       dateRange = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       groupBy = { $dayOfMonth: '$purchaseDate' };
+      daysCount = 30;
     }
 
     const revenueByDate = await Ticket.aggregate([
@@ -259,6 +263,31 @@ export const getRevenueAnalytics = async (req, res) => {
       },
       { $sort: { _id: 1 } }
     ]);
+
+    // Fill missing dates with zero revenue
+    const filledRevenueData = [];
+    const now = new Date();
+    
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const targetDate = new Date(now);
+      targetDate.setDate(targetDate.getDate() - i);
+      
+      let dateId;
+      if (period === 'year') {
+        dateId = targetDate.getMonth() + 1; // 1-12
+      } else {
+        dateId = targetDate.getDate(); // 1-31
+      }
+      
+      const existingData = revenueByDate.find(item => item._id === dateId);
+      
+      filledRevenueData.push({
+        _id: dateId,
+        date: targetDate.toISOString().split('T')[0],
+        revenue: existingData ? Math.max(0, existingData.revenue) : 0, // Ensure non-negative
+        count: existingData ? Math.max(0, existingData.count) : 0
+      });
+    }
 
     // Revenue by category
     const revenueByCategory = await Ticket.aggregate([
@@ -316,7 +345,7 @@ export const getRevenueAnalytics = async (req, res) => {
     ]);
 
     res.json({
-      revenueByDate,
+      revenueByDate: filledRevenueData,
       revenueByCategory,
       revenueByEvent
     });

@@ -24,6 +24,7 @@ import PaymentSuccess from './pages/PaymentSuccess'
 import CheckIn from './pages/CheckIn'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import OrganizerApply from './pages/OrganizerApply'
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/organizer/apply" element={<OrganizerApply />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 

@@ -48,10 +48,14 @@ const eventSchema = new mongoose.Schema({
     validate: {
       validator: function (v) {
         // Allow URLs with or without query params
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(v) || 
-               /^https?:\/\/.+/.test(v); // Fallback for CDN URLs without extension
+        const isUrl = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(v) || 
+                      /^https?:\/\/.+/.test(v);
+        
+        const isBase64 = /^data:image\/(png|jpg|jpeg|gif|webp);base64,/.test(v);
+        
+        return isUrl || isBase64;
       },
-      message: 'Image must be a valid image URL'
+      message: 'Image must be a valid image URL or base64 string'
     }
   },
   capacity: {

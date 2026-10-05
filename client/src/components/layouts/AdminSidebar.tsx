@@ -4,10 +4,25 @@ interface AdminSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   userRole?: 'admin' | 'organizer' | 'user';
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
 }
 
-const AdminSidebar = ({ activeTab, setActiveTab, userRole = 'admin' }: AdminSidebarProps) => {
+const AdminSidebar = ({ 
+  activeTab, 
+  setActiveTab, 
+  userRole = 'admin',
+  isMobileMenuOpen = false,
+  setIsMobileMenuOpen
+}: AdminSidebarProps) => {
   const isAdmin = userRole === 'admin';
+  
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+    if (setIsMobileMenuOpen) {
+      setIsMobileMenuOpen(false); // Close mobile menu after selection
+    }
+  };
   
   const menuItems = [
     {
@@ -27,6 +42,16 @@ const AdminSidebar = ({ activeTab, setActiveTab, userRole = 'admin' }: AdminSide
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+        </svg>
+      )
+    },
+    {
+      id: 'applications',
+      name: 'Đơn đăng ký NTC',
+      roles: ['admin'],
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       )
     },
@@ -87,55 +112,79 @@ const AdminSidebar = ({ activeTab, setActiveTab, userRole = 'admin' }: AdminSide
   const filteredMenuItems = menuItems.filter(item => item.roles.includes(userRole));
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl z-30">
-      {/* Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-gray-700">
-        <Link to="/" className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    <>
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen?.(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl z-50 transition-transform duration-300 lg:translate-x-0 ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Logo */}
+        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-700">
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">TicketHub</h1>
+              <p className="text-xs text-gray-400">{isAdmin ? 'Admin Panel' : 'Organizer Panel'}</p>
+            </div>
+          </Link>
+          
+          {/* Mobile Close Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen?.(false)}
+            className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </div>
-          <div>
-            <h1 className="text-lg font-bold">TicketHub</h1>
-            <p className="text-xs text-gray-400">{isAdmin ? 'Admin Panel' : 'Organizer Panel'}</p>
-          </div>
-        </Link>
-      </div>
-
-      {/* Navigation */}
-      <nav className="mt-6 px-3">
-        <div className="space-y-1">
-          {filteredMenuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                activeTab === item.id
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/50'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              {item.icon}
-              <span className="font-medium">{item.name}</span>
-            </button>
-          ))}
+          </button>
         </div>
-      </nav>
 
-      {/* Bottom Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
-        <Link
-          to="/"
-          className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          <span className="font-medium">Về trang chủ</span>
-        </Link>
-      </div>
-    </aside>
+        {/* Navigation */}
+        <nav className="mt-6 px-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 128px)' }}>
+          <div className="space-y-1">
+            {filteredMenuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleTabClick(item.id)}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  activeTab === item.id
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/50'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                }`}
+              >
+                {item.icon}
+                <span className="font-medium">{item.name}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
+          <Link
+            to="/"
+            className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+            onClick={() => setIsMobileMenuOpen?.(false)}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span className="font-medium">Về trang chủ</span>
+          </Link>
+        </div>
+      </aside>
+    </>
   );
 };
 

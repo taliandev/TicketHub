@@ -61,7 +61,7 @@ export default function Modal({
       aria-labelledby={title ? 'modal-title' : undefined}
     >
       <div
-        className={`relative w-full ${sizeClasses[size]} bg-white rounded-2xl shadow-2xl animate-slideUp`}
+        className={`relative w-full ${sizeClasses[size]} bg-white rounded-2xl shadow-2xl animate-slideUp max-h-[calc(100vh-40px)]`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -97,7 +97,7 @@ export default function Modal({
         )}
 
         {/* Content */}
-        <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {children}
         </div>
       </div>

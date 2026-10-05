@@ -18,6 +18,7 @@ import CategoryPieChart from '@/components/charts/CategoryPieChart';
 import UsersTable from '@/components/admin/UsersTable';
 import EventsTable from '@/components/admin/EventsTable';
 import RevenueAnalytics from '@/components/admin/RevenueAnalytics';
+import OrganizerApplications from '@/components/admin/OrganizerApplications';
 import AnalyticsOverview from '@/components/admin/AnalyticsOverview';
 import SystemSettings from '@/components/admin/SystemSettings';
 import OrganizerTicketsTable from '@/components/organizer/OrganizerTicketsTable';
@@ -41,31 +42,31 @@ const StatCard = ({ title, value, icon, change, changeType, color }: StatCardPro
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100">
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`p-3 rounded-lg bg-gradient-to-br ${colorClasses[color]} shadow-lg`}>
+      <div className="p-4 sm:p-6">
+        <div className="flex items-start justify-between mb-3 sm:mb-4">
+          <div className={`p-2.5 sm:p-3 rounded-lg bg-gradient-to-br ${colorClasses[color]} shadow-lg flex-shrink-0`}>
             <div className="text-white">{icon}</div>
           </div>
           {change !== undefined && (
-            <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${
+            <div className={`flex items-center space-x-1 px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
               changeType === 'positive' 
                 ? 'bg-green-100 text-green-700' 
                 : 'bg-red-100 text-red-700'
             }`}>
               <svg 
-                className={`w-4 h-4 ${changeType === 'positive' ? 'rotate-0' : 'rotate-180'}`} 
+                className={`w-3 h-3 sm:w-4 sm:h-4 ${changeType === 'positive' ? 'rotate-0' : 'rotate-180'}`} 
                 fill="currentColor" 
                 viewBox="0 0 20 20"
               >
                 <path fillRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
-              <span>{Math.abs(change)}%</span>
+              <span className="hidden sm:inline">{Math.abs(change)}%</span>
             </div>
           )}
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 line-clamp-1">{title}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{value}</p>
         </div>
       </div>
     </div>
@@ -157,6 +158,7 @@ interface Activity {
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [revenuePeriod, setRevenuePeriod] = useState<'week' | 'month' | 'year'>('month');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Get user role from Redux
   const user = useSelector((state: RootState) => state.auth.user);
@@ -204,13 +206,19 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} userRole={user?.role} />
+      <AdminSidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        userRole={user?.role}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
 
       {/* Header */}
-      <AdminHeader />
+      <AdminHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
 
       {/* Main Content */}
-      <main className="ml-64 mt-16 p-8">
+      <main className="lg:ml-64 mt-16 p-4 sm:p-6 lg:p-8">
         {activeTab === 'overview' && (
           <div className="space-y-8">
             {/* Page Title */}
@@ -235,8 +243,8 @@ const AdminDashboard = () => {
               </div>
             ) : null}
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Stats Grid - 2x2 on mobile, 4 columns on desktop */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               {isAdmin && (
                 <StatCard
                   title="Tổng người dùng"
@@ -295,7 +303,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Charts Row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
               {/* Revenue Trend Chart */}
               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
@@ -353,10 +361,10 @@ const AdminDashboard = () => {
 
             {/* Charts Row 2 - Summary Stats */}
             {revenueData && (
-              <div className="grid grid-cols-1 gap-6">
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Tổng quan hiệu suất</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 gap-4 lg:gap-6">
+                <div className="bg-white border border-gray-200 rounded-xl p-4 lg:p-6 shadow-sm">
+                  <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">Tổng quan hiệu suất</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <span className="text-gray-700">Doanh thu kỳ này</span>
                       <span className="text-2xl font-bold text-blue-600">
@@ -436,6 +444,16 @@ const AdminDashboard = () => {
               <p className="text-gray-600 mt-1">Quản lý tất cả người dùng trong hệ thống</p>
             </div>
             <UsersTable />
+          </div>
+        )}
+
+        {activeTab === 'applications' && isAdmin && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Đơn đăng ký Nhà tổ chức</h2>
+              <p className="text-gray-600 mt-1">Xem xét và phê duyệt đơn đăng ký trở thành nhà tổ chức</p>
+            </div>
+            <OrganizerApplications />
           </div>
         )}
 

@@ -31,7 +31,7 @@ const EventForm = ({ event, onSuccess, onCancel }: EventFormProps) => {
     date: event?.date ? new Date(event.date).toISOString().slice(0, 16) : '',
     location: event?.location || '',
     category: event?.category || 'Technology',
-    img: event?.img || 'https://via.placeholder.com/800x400.png?text=Event+Image',
+    img: event?.img || '',
     capacity: event?.capacity || 100,
     status: event?.status || 'draft',
     ticketTypes: event?.ticketTypes || [
@@ -39,15 +39,110 @@ const EventForm = ({ event, onSuccess, onCancel }: EventFormProps) => {
     ]
   });
 
+  const [imagePreview, setImagePreview] = useState(event?.img || '');
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [errors, setErrors] = useState<any>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Update preview if img URL changes
+    if (name === 'img') {
+      setImagePreview(value);
+    }
+    
     // Clear error when user types
     if (errors[name]) {
       setErrors((prev: any) => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setErrors((prev: any) => ({ ...prev, img: 'Vui lòng chọn file ảnh' }));
+      return;
+    }
+
+    // Validate file size (max 2MB for original file)
+    if (file.size > 2 * 1024 * 1024) {
+      setErrors((prev: any) => ({ ...prev, img: 'Kích thước ảnh không được vượt quá 2MB' }));
+      return;
+    }
+
+    setUploadingImage(true);
+    setErrors((prev: any) => ({ ...prev, img: '' }));
+
+    try {
+      // Compress and resize image
+      const compressedImage = await compressImage(file);
+      setFormData(prev => ({ ...prev, img: compressedImage }));
+      setImagePreview(compressedImage);
+      setUploadingImage(false);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setErrors((prev: any) => ({ ...prev, img: 'Lỗi khi tải ảnh lên' }));
+      setUploadingImage(false);
+    }
+  };
+
+  // Compress image to reduce size
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          
+          // Max dimensions
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 800;
+          
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 with compression (0.8 quality)
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          
+          // Check final size (should be under 1MB after compression)
+          const sizeInMB = (compressedBase64.length * 3) / 4 / (1024 * 1024);
+          if (sizeInMB > 1.5) {
+            // If still too large, compress more
+            resolve(canvas.toDataURL('image/jpeg', 0.6));
+          } else {
+            resolve(compressedBase64);
+          }
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
   };
 
   const handleTicketTypeChange = (index: number, field: string, value: any) => {
@@ -264,20 +359,96 @@ const EventForm = ({ event, onSuccess, onCancel }: EventFormProps) => {
         </div>
       </div>
 
-      {/* Image URL */}
+      {/* Image Upload */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          URL hình ảnh *
+          Hình ảnh sự kiện *
         </label>
-        <input
-          type="url"
-          name="img"
-          value={formData.img}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="https://example.com/image.jpg"
-        />
-        {errors.img && <p className="text-red-500 text-sm mt-1">{errors.img}</p>}
+        
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mb-4 relative">
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              className="w-full h-64 object-cover rounded-lg border-2 border-gray-200"
+              onError={() => setImagePreview('')}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setImagePreview('');
+                setFormData(prev => ({ ...prev, img: '' }));
+              }}
+              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Upload Options */}
+        <div className="space-y-3">
+          {/* File Upload */}
+          <div>
+            <label className="block">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 hover:bg-blue-50">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploadingImage}
+                />
+                <div className="space-y-2">
+                  {uploadingImage ? (
+                    <>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="text-sm text-gray-600">Đang tải ảnh lên...</p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <div>
+                        <p className="text-sm font-medium text-blue-600">Tải ảnh từ máy</p>
+                        <p className="text-xs text-gray-500">PNG, JPG, GIF tối đa 2MB</p>
+                        <p className="text-xs text-gray-400 mt-1">Ảnh sẽ tự động nén và resize</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </label>
+          </div>
+
+          {/* URL Input */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Hoặc</span>
+            </div>
+          </div>
+
+          <div>
+            <input
+              type="url"
+              name="img"
+              value={formData.img.startsWith('data:') ? '' : formData.img}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Nhập URL hình ảnh: https://example.com/image.jpg"
+              disabled={uploadingImage}
+            />
+          </div>
+        </div>
+
+        {errors.img && <p className="text-red-500 text-sm mt-2">{errors.img}</p>}
       </div>
 
       {/* Status */}

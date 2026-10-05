@@ -2,6 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Ticket = require('../models/Ticket');
 const auth = require('../middleware/auth');
+const { viewTicket, getTicketQR } = require('../controllers/ticketViewController');
+
+// Public route - View ticket with token
+router.get('/view/:ticketCode', viewTicket);
+
+// Public route - Get QR code with token
+router.get('/:ticketId/qr', getTicketQR);
 
 // Tạo vé mới
 router.post('/', auth, async (req, res) => {

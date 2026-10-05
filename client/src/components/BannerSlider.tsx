@@ -23,9 +23,11 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 5000,
-    arrows: true,
+    arrows: typeof window !== 'undefined' && window.innerWidth >= 768, // Arrows only on desktop
     fade: true,
     cssEase: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    swipeToSlide: true,
+    touchThreshold: 10,
     beforeChange: (_current: number, _next: number) => {
       // Remove tabindex from all slides
       const slides = document.querySelectorAll('.slick-slide')
@@ -40,6 +42,15 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
         })
       })
     },
+    responsive: [
+      {
+        breakpoint: 768,
+        settings: {
+          arrows: false, // No arrows on mobile
+          dots: true, // Pagination dots on mobile
+        }
+      }
+    ]
   }
 
   if (events.length === 0) {
@@ -54,7 +65,7 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
           
           return (
           <div key={event._id}>
-            <div className="relative h-[450px] md:h-[550px] overflow-hidden">
+            <div className="relative h-[400px] sm:h-[450px] md:h-[550px] overflow-hidden">
               {/* Background Image with Parallax Effect */}
               <div className="absolute inset-0">
                 <img
@@ -71,7 +82,7 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
               {/* Content Container */}
               <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center h-full">
-                  <div className="max-w-2xl space-y-6 animate-slideUp">
+                  <div className="max-w-2xl space-y-3 sm:space-y-4 md:space-y-6 animate-slideUp">
                     {/* Badge */}
                     <div className="flex items-center gap-3">
                       
@@ -92,12 +103,12 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
                     </div>
 
                     {/* Title */}
-                    <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-white leading-tight">
                       {event.title}
                     </h1>
 
                     {/* Description */}
-                    <p className="text-lg md:text-xl text-gray-200 line-clamp-2 leading-relaxed">
+                    <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 line-clamp-2 leading-relaxed">
                       {event.description}
                     </p>
 
@@ -176,17 +187,17 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
                     </div>
 
                     {/* CTA Buttons */}
-                    <div className="flex flex-wrap gap-4 pt-2">
-                      <Link to={`/events/${event._id}`}>
-                        <button className={`group relative px-8 py-4 rounded-lg font-semibold overflow-hidden transition-all duration-300 min-h-[48px] ${
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2">
+                      <Link to={`/events/${event._id}`} className="w-full sm:w-auto">
+                        <button className={`group relative w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold overflow-hidden transition-all duration-300 min-h-[48px] text-sm sm:text-base ${
                           eventStatus.isExpired
                             ? 'bg-gray-600 text-white hover:bg-gray-700'
                             : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/50'
                         }`}>
-                          <span className="relative z-10 flex items-center">
+                          <span className="relative z-10 flex items-center justify-center">
                             {eventStatus.isExpired ? 'Xem chi tiết' : 'Đặt vé ngay'}
                             <svg
-                              className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1"
+                              className="w-4 h-4 sm:w-5 sm:h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -202,7 +213,7 @@ const BannerSlider = ({ events }: { events: Event[] }) => {
                         </button>
                       </Link>
 
-                      <button className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold border border-white/20 hover:bg-white/20 transition-all duration-300 min-h-[48px]">
+                      <button className="hidden sm:block px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold border border-white/20 hover:bg-white/20 transition-all duration-300 min-h-[48px] text-sm sm:text-base">
                         Chia sẻ
                       </button>
                     </div>

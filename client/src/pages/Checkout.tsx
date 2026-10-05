@@ -44,6 +44,7 @@ const Checkout = () => {
   const [ttl, setTtl] = useState<number>(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSwitchToRegister = () => {
     setShowLoginModal(false);
@@ -117,8 +118,11 @@ const Checkout = () => {
                 }
                 localStorage.removeItem(reservationStorageKey);
               }
-            } catch {
-              localStorage.removeItem(reservationStorageKey);
+            } catch (error: any) {
+              // If 404, reservation expired - remove from storage
+              if (error?.response?.status === 404) {
+                localStorage.removeItem(reservationStorageKey);
+              }
             }
           }
         }
@@ -167,12 +171,17 @@ const Checkout = () => {
       try {
         const r = await axiosInstance.get(`/reservations/${reservationId}/ttl`);
         if (typeof r.data.ttlSeconds === 'number') setTtl(r.data.ttlSeconds);
-      } catch {
-        // ignore
+      } catch (error: any) {
+        if (error?.response?.status === 404) {
+          clearInterval(interval);
+          setTtl(0);
+          setReservationId('');
+          if (reservationStorageKey) localStorage.removeItem(reservationStorageKey);
+        }
       }
     }, 15000);
     return () => clearInterval(interval);
-  }, [reservationId]);
+  }, [reservationId, reservationStorageKey]);
 
   const handleCancelCheckout = async () => {
     try {
@@ -261,8 +270,7 @@ const Checkout = () => {
   };
 
   const handlePaymentSuccess = () => {
-    alert('Thanh toán thành công! Vé của bạn đã được kích hoạt.');
-    navigate('/profile');
+    setShowSuccessModal(true);
   };
 
   const handlePaymentError = (error: string) => {
@@ -276,24 +284,22 @@ const Checkout = () => {
   if (!user) return null;
   if (!bookingData) return null;
 
-  if (showPayment && ticketId) {
-    return (
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        <PaymentGateway
-          amount={bookingData.price * bookingData.quantity}
-          ticketId={ticketId}
-          reservationId={reservationId}
-          onSuccess={handlePaymentSuccess}
-          onError={handlePaymentError}
-          onCancel={handlePaymentCancel}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="bg-white rounded-lg shadow-lg p-8">
+    <>
+      {showPayment && ticketId ? (
+        <div className="max-w-4xl mx-auto py-8 px-4">
+          <PaymentGateway
+            amount={bookingData.price * bookingData.quantity}
+            ticketId={ticketId}
+            reservationId={reservationId}
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+            onCancel={handlePaymentCancel}
+          />
+        </div>
+      ) : (
+        <div className="max-w-2xl mx-auto py-8 px-4">
+          <div className="bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold mb-6 text-center">Thông tin thanh toán</h1>
         
         {/* Order Summary */}
@@ -462,7 +468,145 @@ const Checkout = () => {
         onClose={() => setShowRegisterModal(false)}
         onSwitchToLogin={handleSwitchToLogin}
       />
-    </div>
+        </div>
+      )}
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 md:p-6">
+          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl sm:rounded-3xl p-6 sm:p-7 lg:p-10 w-full max-w-[95%] sm:max-w-md lg:max-w-[580px] border border-green-500/20 shadow-2xl shadow-green-500/10 relative max-h-[calc(100vh-40px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 w-9 h-9 flex items-center justify-center rounded-lg bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 hover:text-white transition-all duration-200 active:scale-95 z-10"
+              aria-label="Đóng"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="relative z-10">
+              {/* Success Icon */}
+              <div className="flex justify-center mb-6 sm:mb-7">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl" />
+                  <div className="relative bg-gradient-to-br from-green-500 to-emerald-600 rounded-full p-4 sm:p-5 shadow-xl shadow-green-500/30">
+                    <svg className="w-14 h-14 sm:w-16 sm:h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Title */}
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-2 sm:mb-3 text-white">
+                Thanh toán thành công!
+              </h2>
+              
+              {/* Subtitle */}
+              <p className="text-gray-400 text-center mb-7 sm:mb-8 lg:mb-10 leading-relaxed text-sm sm:text-base">
+                Vé của bạn đã được kích hoạt và gửi đến email của bạn.
+              </p>
+
+              {/* Transaction Summary Card */}
+              <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 border border-gray-700/50 rounded-2xl p-5 sm:p-6 lg:p-7 mb-7 sm:mb-8 lg:mb-10 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-700/50">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 className="text-base sm:text-lg font-semibold text-white">Thông tin giao dịch</h3>
+                  </div>
+                  {/* Print/Download button for desktop */}
+                  <button
+                    onClick={() => window.print()}
+                    className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-700/30 hover:bg-gray-700/50 rounded-lg transition-all"
+                    title="In vé"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    In vé
+                  </button>
+                </div>
+                
+                <div className="space-y-3.5 sm:space-y-4">
+                  <div className="flex justify-between items-center gap-4">
+                    <span className="text-gray-400 text-sm flex-shrink-0">Mã vé</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-mono font-semibold text-sm bg-gray-700/50 px-3 py-1.5 rounded-lg">
+                        #{ticketId.slice(-8).toUpperCase()}
+                      </span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(ticketId);
+                          // Optional: Show toast notification
+                        }}
+                        className="hidden sm:flex items-center justify-center w-8 h-8 text-gray-400 hover:text-white bg-gray-700/30 hover:bg-gray-700/50 rounded-lg transition-all"
+                        title="Sao chép mã vé"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-start gap-4">
+                    <span className="text-gray-400 text-sm flex-shrink-0">Loại vé</span>
+                    <span className="text-white font-medium text-sm text-right">
+                      {bookingData?.type || 'Standard Ticket'}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center gap-4">
+                    <span className="text-gray-400 text-sm flex-shrink-0">Số lượng</span>
+                    <span className="text-white font-medium text-sm">
+                      {bookingData?.quantity || 1} vé
+                    </span>
+                  </div>
+
+                  <div className="h-px bg-gradient-to-r from-transparent via-gray-700/50 to-transparent my-1" />
+
+                  <div className="flex justify-between items-center gap-4 pt-1">
+                    <span className="text-gray-400 text-sm font-medium flex-shrink-0">Tổng tiền</span>
+                    <span className="text-green-400 font-bold text-xl sm:text-2xl">
+                      {((bookingData?.price || 0) * (bookingData?.quantity || 1)).toLocaleString()}đ
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Row layout for desktop, stacked for mobile */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate('/events');
+                  }}
+                  className="sm:flex-1 sm:order-1 py-3 sm:py-3.5 px-5 text-gray-400 hover:text-white font-medium transition-all duration-200 rounded-xl border border-gray-700/50 hover:border-gray-600 hover:bg-gray-800/30 active:bg-gray-800/50 text-sm sm:text-base order-2"
+                >
+                  Quay lại trang sự kiện
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate('/profile');
+                  }}
+                  className="sm:flex-1 sm:order-2 py-3 sm:py-3.5 px-5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 active:from-green-700 active:to-emerald-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 text-sm sm:text-base order-1"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                  </svg>
+                  Xem vé của tôi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

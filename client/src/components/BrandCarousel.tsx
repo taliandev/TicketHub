@@ -22,24 +22,24 @@ const BrandCarousel: React.FC = () => {
   const slides: Brand[][] = [slide1, slide2];
 
   return (
-    <div className="relative w-full overflow-hidden bg-gradient-to-r from-gray-900 via-black to-gray-900 py-16 border-y border-purple-500/10">
+    <div className="relative w-full overflow-hidden bg-gradient-to-r from-gray-900 via-black to-gray-900 py-12 md:py-16 border-y border-purple-500/10">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.05)_0%,transparent_70%)]" />
       <div className="animate-scroll inline-flex whitespace-nowrap slide">
         {[...slides, ...slides].map((slide, slideIndex) => (
-          <div key={slideIndex} className="inline-flex w-[1440px] px-[20px]">
+          <div key={slideIndex} className="inline-flex w-full sm:w-[1440px] px-[10px] sm:px-[20px]">
             {slide.map((brand, index) => (
               <div 
                 key={`${brand.id}-${index}`} 
-                className="inline-flex flex-col items-center mx-8 group transition-all duration-300 hover:scale-105"
+                className="inline-flex flex-col items-center mx-4 sm:mx-6 md:mx-8 group transition-all duration-300 hover:scale-105"
               >
-                <div className="w-[180px] h-[180px] bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-purple-500/20 shadow-lg flex items-center justify-center overflow-hidden p-6 transition-all duration-300 group-hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] group-hover:border-purple-500/40 group-hover:bg-gray-800/70">
+                <div className="w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] md:w-[180px] md:h-[180px] bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-xl md:rounded-2xl border border-purple-500/20 shadow-lg flex items-center justify-center overflow-hidden p-4 sm:p-5 md:p-6 transition-all duration-300 group-hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] group-hover:border-purple-500/40 group-hover:bg-gray-800/70">
                   <img 
                     src={brand.logo} 
                     alt={brand.name} 
                     className="max-w-full max-h-full object-contain filter brightness-75 group-hover:brightness-100 transition-all duration-300" 
                   />
                 </div>
-                <p className="text-sm font-medium text-gray-500 mt-4 text-center group-hover:text-purple-400 transition-colors duration-300">
+                <p className="text-xs sm:text-sm font-medium text-gray-500 mt-3 sm:mt-4 text-center group-hover:text-purple-400 transition-colors duration-300">
                   {brand.name}
                 </p>
               </div>
@@ -60,7 +60,7 @@ const BrandCarousel: React.FC = () => {
       
           @media (max-width: 768px) {
             .slide {
-              animation-duration: 30s;
+              animation-duration: 25s;
             }
           }
         `}

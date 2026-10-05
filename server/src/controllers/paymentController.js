@@ -4,7 +4,7 @@ import Ticket  from '../models/Ticket.js';
 import Order from '../models/Order.js';
 import Redis from 'ioredis';
 import { Event } from '../models/Event.js';
-import { sendTicketEmail } from '../services/emailService.js';
+import { addTicketEmailJob } from '../queues/emailQueue.js';
 import User from '../models/User.js';
 
 const redis = new Redis({
@@ -253,29 +253,30 @@ export const checkPaymentStatus = async (req, res) => {
           await decrementRealStock(transaction.ticketId, transaction.method, transaction.reservationId);
         }
 
-        // Send ticket email
+        // Send ticket email via queue (async, non-blocking)
         try {
           const user = await User.findById(ticket.userId);
           const event = await Event.findById(ticket.eventId);
           
           if (user && event) {
-            await sendTicketEmail({
+            await addTicketEmailJob({
+              userId: ticket.userId.toString(),
+              ticketId: ticket._id.toString(),
               userEmail: user.email,
               userName: user.fullName || user.username,
               eventTitle: event.title,
               eventDate: event.date,
               eventLocation: event.location,
               ticketCode: ticket.ticketCode,
-              qrCode: ticket.qrCode,
               ticketType: ticket.type,
               quantity: ticket.quantity_total,
               totalPrice: ticket.price
             });
-            console.log('Ticket email sent to:', user.email);
+            console.log('Ticket email job added to queue for:', user.email);
           }
         } catch (emailError) {
-          console.error('Error sending ticket email:', emailError);
-          // Don't fail the payment if email fails
+          console.error('Error adding ticket email job to queue:', emailError);
+          // Don't fail the payment if email queueing fails
         }
       }
     }
@@ -343,28 +344,30 @@ export const handlePaymentWebhook = async (req, res) => {
         await decrementRealStock(transaction.ticketId, transaction.method, transaction.reservationId);
       }
 
-      // Send ticket email
+      // Send ticket email via queue (async, non-blocking)
       try {
         const user = await User.findById(ticket.userId);
         const event = await Event.findById(ticket.eventId);
         
         if (user && event) {
-          await sendTicketEmail({
+          await addTicketEmailJob({
+            userId: ticket.userId.toString(),
+            ticketId: ticket._id.toString(),
             userEmail: user.email,
             userName: user.fullName || user.username,
             eventTitle: event.title,
             eventDate: event.date,
             eventLocation: event.location,
             ticketCode: ticket.ticketCode,
-            qrCode: ticket.qrCode,
             ticketType: ticket.type,
             quantity: ticket.quantity_total,
             totalPrice: ticket.price
           });
+          console.log('Ticket email job added to queue for:', user.email);
         }
       } catch (emailError) {
-        console.error('Error sending ticket email:', emailError);
-        // Don't fail the payment if email fails
+        console.error('Error adding ticket email job to queue:', emailError);
+        // Don't fail the payment if email queueing fails
       }
     }
     

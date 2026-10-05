@@ -9,20 +9,24 @@
     "dev": "nodemon src/index.js",
     "seed": "node src/scripts/seed.js",
     "seed:admin": "node seedAdmin.js",
-    "seed:sample": "node seedSampleData.js"
+    "seed:sample": "node seedSampleData.js",
+    "cleanup-jobs": "node src/scripts/cleanupJobs.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "bullmq": "^6.3.8",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "handlebars": "^4.7.9",
     "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.3",
     "morgan": "^1.10.0",
     "nodemailer": "^7.0.12",
     "qrcode": "^1.5.4",
+    "resend": "^6.28.1",
     "uuid": "^11.1.0",
     "validator": "^13.15.15"
   },

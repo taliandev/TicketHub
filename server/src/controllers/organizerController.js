@@ -1,5 +1,8 @@
 import { Event } from '../models/Event.js';
 import Ticket from '../models/Ticket.js';
+import OrganizerApplication from '../models/OrganizerApplication.js';
+import OrganizerProfile from '../models/OrganizerProfile.js';
+import User from '../models/User.js';
 
 // Get organizer dashboard stats
 export const getOrganizerStats = async (req, res) => {
@@ -500,5 +503,160 @@ export const verifyTicket = async (req, res) => {
   } catch (error) {
     console.error('Error verifying ticket:', error);
     res.status(500).json({ message: 'Lỗi khi xác thực vé', error: error.message });
+  }
+};
+
+export const submitApplication = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const existingApplication = await OrganizerApplication.findOne({
+      userId,
+      status: { $in: ['PENDING', 'APPROVED'] }
+    });
+
+    if (existingApplication) {
+      if (existingApplication.status === 'APPROVED') {
+        return res.status(400).json({ message: 'Bạn đã là nhà tổ chức' });
+      }
+      return res.status(400).json({ message: 'Đơn đăng ký của bạn đang được xem xét' });
+    }
+
+    const application = new OrganizerApplication({
+      userId,
+      ...req.body
+    });
+
+    await application.save();
+
+    res.status(201).json({
+      message: 'Đăng ký thành công. Chúng tôi sẽ xem xét và phản hồi trong vòng 24-48 giờ.',
+      application
+    });
+  } catch (error) {
+    console.error('Error submitting application:', error);
+    if (error.name === 'ValidationError') {
+      const errors = Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message
+      }));
+      return res.status(400).json({ message: 'Lỗi validation', errors });
+    }
+    res.status(500).json({ message: 'Lỗi khi gửi đơn đăng ký', error: error.message });
+  }
+};
+
+// Get all applications (admin only)
+export const getApplications = async (req, res) => {
+  try {
+    const { status = '', page = 1, limit = 20 } = req.query;
+
+    const query = status ? { status } : {};
+
+    const applications = await OrganizerApplication.find(query)
+      .populate('userId', 'username email fullName')
+      .populate('reviewedBy', 'username email')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const count = await OrganizerApplication.countDocuments(query);
+
+    res.json({
+      applications,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page),
+      total: count
+    });
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    res.status(500).json({ message: 'Lỗi khi lấy danh sách đơn đăng ký', error: error.message });
+  }
+};
+
+// Approve application (admin only)
+export const approveApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminId = req.user.id;
+
+    const application = await OrganizerApplication.findById(id).populate('userId');
+    
+    if (!application) {
+      return res.status(404).json({ message: 'Không tìm thấy đơn đăng ký' });
+    }
+
+    if (application.status !== 'PENDING') {
+      return res.status(400).json({ message: 'Đơn đăng ký đã được xử lý' });
+    }
+
+    // Update application status
+    application.status = 'APPROVED';
+    application.reviewedAt = new Date();
+    application.reviewedBy = adminId;
+    await application.save();
+
+    // Update user role to organizer
+    const user = await User.findById(application.userId._id);
+    user.role = 'organizer';
+    await user.save();
+
+    // Create organizer profile
+    const existingProfile = await OrganizerProfile.findOne({ userId: application.userId._id });
+    
+    if (!existingProfile) {
+      const organizerProfile = new OrganizerProfile({
+        userId: application.userId._id,
+        organizationName: application.organizationName,
+        description: application.description
+      });
+      await organizerProfile.save();
+    }
+
+    res.json({
+      message: 'Đã phê duyệt đơn đăng ký thành công',
+      application
+    });
+  } catch (error) {
+    console.error('Error approving application:', error);
+    res.status(500).json({ message: 'Lỗi khi phê duyệt đơn đăng ký', error: error.message });
+  }
+};
+
+// Reject application (admin only)
+export const rejectApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rejectionReason } = req.body;
+    const adminId = req.user.id;
+
+    if (!rejectionReason) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp lý do từ chối' });
+    }
+
+    const application = await OrganizerApplication.findById(id);
+    
+    if (!application) {
+      return res.status(404).json({ message: 'Không tìm thấy đơn đăng ký' });
+    }
+
+    if (application.status !== 'PENDING') {
+      return res.status(400).json({ message: 'Đơn đăng ký đã được xử lý' });
+    }
+
+    // Update application status
+    application.status = 'REJECTED';
+    application.reviewedAt = new Date();
+    application.reviewedBy = adminId;
+    application.rejectionReason = rejectionReason;
+    await application.save();
+
+    res.json({
+      message: 'Đã từ chối đơn đăng ký',
+      application
+    });
+  } catch (error) {
+    console.error('Error rejecting application:', error);
+    res.status(500).json({ message: 'Lỗi khi từ chối đơn đăng ký', error: error.message });
   }
 };

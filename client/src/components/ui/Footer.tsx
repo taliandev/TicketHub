@@ -90,7 +90,13 @@ const Footer = () => {
               <li><Link to="#" className="text-gray-400 hover:text-white transition-colors">Tạo sự kiện</Link></li>
               <li><Link to="#" className="text-gray-400 hover:text-white transition-colors">Bảng giá</Link></li>
               <li><Link to="#" className="text-gray-400 hover:text-white transition-colors">Tính năng</Link></li>
-              <li><Link to="#" className="text-gray-400 hover:text-white transition-colors">Đăng ký hợp tác</Link></li>
+              <li>
+                <Link to="/organizer/apply" className="text-gray-400 hover:text-purple-300 transition-colors font-semibold flex items-center gap-1">
+                  Đăng ký hợp tác
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  </svg>
+                </Link>
+              </li>
             </ul>
           </div>
 

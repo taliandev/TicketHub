@@ -12,9 +12,14 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import reservationRoutes from './routes/reservationRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import organizerRoutes from './routes/organizerRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
 
 // Load environment variables
 dotenv.config();
+
+// Import email worker to start it
+import './queues/workers/emailWorker.js';
 
 // Create Express app
 const app = express();
@@ -33,7 +38,8 @@ app.use(cors({
   credentials: true 
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: true }));
 app.use(cookieParser());
 
 // Only use morgan in development
@@ -49,6 +55,8 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/organizer', organizerRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to TicketHub API' });

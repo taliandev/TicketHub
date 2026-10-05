@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
-import { sendPasswordResetEmail } from '../services/emailService.js';
+import { addPasswordResetJob } from '../queues/emailQueue.js';
 
 // Token generation helpers
 const generateAccessToken = (userId) => {
@@ -186,11 +186,16 @@ export const forgotPassword = async (req, res) => {
     await user.save();
 
     // Create reset URL
-    const resetUrl = `${process.env.CLIENT_URL }/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
-    // Send email
+    // Add email job to queue (non-blocking)
     try {
-      await sendPasswordResetEmail(user.email, user.fullName, resetUrl);
+      await addPasswordResetJob({
+        userId: user._id.toString(),
+        userEmail: user.email,
+        userName: user.fullName || user.username,
+        resetUrl
+      });
       
       res.json({ 
         message: 'Email đặt lại mật khẩu đã được gửi',
@@ -198,9 +203,9 @@ export const forgotPassword = async (req, res) => {
         ...(process.env.NODE_ENV === 'development' && { resetUrl })
       });
     } catch (emailError) {
-      console.error('Email sending error:', emailError);
+      console.error('Error adding password reset email to queue:', emailError);
       
-      // Clear reset token if email fails
+      // Clear reset token if email queueing fails
       user.resetPasswordToken = undefined;
       user.resetPasswordExpires = undefined;
       await user.save();

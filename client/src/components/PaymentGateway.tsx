@@ -30,6 +30,8 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [paymentUrl, setPaymentUrl] = useState<string>('');
   const [transactionId, setTransactionId] = useState<string>('');
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null);
 
   const bankAccounts: BankInfo[] = [
     {
@@ -140,28 +142,65 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
     const transferInfo = `Ngân hàng: ${bankInfo.name}\nSố tài khoản: ${bankInfo.accountNumber}\nTên tài khoản: ${bankInfo.accountName}\nNội dung: ${transactionId}`;
     
     navigator.clipboard.writeText(transferInfo).then(() => {
-      alert('Đã copy thông tin chuyển khoản vào clipboard!');
+      setStatusMessage({ type: 'success', text: 'Đã copy thông tin chuyển khoản vào clipboard!' });
+      setTimeout(() => setStatusMessage(null), 3000);
     });
   };
 
   const checkPaymentStatus = async () => {
-    if (!transactionId) return;
+    if (!transactionId || checkingStatus) return;
     
+    setCheckingStatus(true);
+    setStatusMessage(null);
     try {
       const response = await axiosInstance.get(`/payments/status/${transactionId}`);
       if (response.data.status === 'paid') {
         onSuccess();
       } else {
-        alert('Thanh toán chưa hoàn tất. Vui lòng thử lại sau.');
+        setStatusMessage({ type: 'info', text: 'Thanh toán chưa hoàn tất. Vui lòng thử lại sau.' });
+        setTimeout(() => setStatusMessage(null), 5000);
       }
     } catch (error) {
-      onError('Không thể kiểm tra trạng thái thanh toán.');
+      setStatusMessage({ type: 'error', text: 'Không thể kiểm tra trạng thái thanh toán.' });
+      setTimeout(() => setStatusMessage(null), 5000);
+    } finally {
+      setCheckingStatus(false);
     }
   };
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-bold mb-6">Chọn phương thức thanh toán</h2>
+      
+      {/* Status Message */}
+      {statusMessage && (
+        <div className={`mb-4 p-4 rounded-lg flex items-start gap-3 ${
+          statusMessage.type === 'success' ? 'bg-green-50 border border-green-200' :
+          statusMessage.type === 'error' ? 'bg-red-50 border border-red-200' :
+          'bg-blue-50 border border-blue-200'
+        }`}>
+          <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+            statusMessage.type === 'success' ? 'text-green-600' :
+            statusMessage.type === 'error' ? 'text-red-600' :
+            'text-blue-600'
+          }`} fill="currentColor" viewBox="0 0 20 20">
+            {statusMessage.type === 'success' ? (
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            ) : statusMessage.type === 'error' ? (
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            ) : (
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            )}
+          </svg>
+          <p className={`flex-1 text-sm font-medium ${
+            statusMessage.type === 'success' ? 'text-green-800' :
+            statusMessage.type === 'error' ? 'text-red-800' :
+            'text-blue-800'
+          }`}>
+            {statusMessage.text}
+          </p>
+        </div>
+      )}
       
       <div className="mb-6">
         <div className="text-center mb-4">
@@ -292,15 +331,20 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
                   <div className="mt-4 flex gap-3">
                     <button
                       onClick={handleBankTransfer}
-                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                      disabled={checkingStatus}
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Copy thông tin
                     </button>
                     <button
                       onClick={checkPaymentStatus}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                      disabled={checkingStatus}
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                     >
-                      Kiểm tra thanh toán
+                      {checkingStatus && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      )}
+                      {checkingStatus ? 'Đang kiểm tra...' : 'Kiểm tra thanh toán'}
                     </button>
                   </div>
                 </div>
@@ -316,9 +360,13 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
                     <p className="text-sm text-gray-600 mb-3">Mã giao dịch: {transactionId}</p>
                     <button
                       onClick={checkPaymentStatus}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                      disabled={checkingStatus}
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 mx-auto"
                     >
-                      Kiểm tra thanh toán
+                      {checkingStatus && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      )}
+                      {checkingStatus ? 'Đang kiểm tra...' : 'Kiểm tra thanh toán'}
                     </button>
                   </div>
                 </div>
@@ -331,15 +379,20 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
                   <div className="flex gap-3 justify-center">
                     <button
                       onClick={() => window.open(paymentUrl, '_blank')}
-                      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                      disabled={checkingStatus}
+                      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Tiếp tục thanh toán
                     </button>
                     <button
                       onClick={checkPaymentStatus}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                      disabled={checkingStatus}
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                     >
-                      Kiểm tra trạng thái
+                      {checkingStatus && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      )}
+                      {checkingStatus ? 'Đang kiểm tra...' : 'Kiểm tra trạng thái'}
                     </button>
                   </div>
                 </div>
@@ -353,16 +406,21 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({
       <div className="flex gap-3 mt-6">
         <button
           onClick={onCancel}
-          className="flex-1 py-2 px-4 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+          disabled={checkingStatus}
+          className="flex-1 py-2 px-4 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           Hủy
         </button>
         {selectedMethod && !loading && (
           <button
             onClick={() => checkPaymentStatus()}
-            className="flex-1 py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={checkingStatus}
+            className="flex-1 py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
-            Kiểm tra thanh toán
+            {checkingStatus && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            )}
+            {checkingStatus ? 'Đang kiểm tra...' : 'Kiểm tra thanh toán'}
           </button>
         )}
       </div>

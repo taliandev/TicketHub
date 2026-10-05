@@ -29,7 +29,7 @@ const Card = ({ img, date, title, description, location, id }: CardProps) => {
 
   return (
     <div
-      className="w-[324px] h-[600px] bg-gray-900/90 backdrop-blur-sm rounded-2xl border border-gray-800 shadow-lg relative transition-all duration-300 ease-out cursor-pointer hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/20 hover:border-purple-500/50 overflow-hidden group"
+      className="w-full h-[600px] bg-gray-900/90 backdrop-blur-sm rounded-2xl border border-gray-800 shadow-lg relative transition-all duration-300 ease-out cursor-pointer hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/20 hover:border-purple-500/50 overflow-hidden group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
